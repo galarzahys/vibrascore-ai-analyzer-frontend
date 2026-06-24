@@ -2895,7 +2895,7 @@ body.edit-mode #topbar {
             if (loadingMsgTimer) { clearInterval(loadingMsgTimer); loadingMsgTimer = null; }
         }
 
-        function iniciarPolling(aid, vibraId, empresaNome, empresaCnpj) {
+        async function iniciarPolling(aid, vibraId, empresaNome, empresaCnpj) {
             let tentativas = 0;
             pollingInterval = setInterval(async () => {
                 tentativas++;
@@ -2988,7 +2988,7 @@ body.edit-mode #topbar {
             renderAnalyses();
         }
 
-        function renderAnalyses() {
+        async function renderAnalyses() {
             const list = allAnalyses;
             allAnalyses = list;
             const search = (document.getElementById('search-box').value || '').toLowerCase();
@@ -3128,7 +3128,7 @@ body.edit-mode #topbar {
             await carregarOverrides(aid);
             await _fbLoadFromServer(aid);
             sincronizarVisitFiles(); // garante que uploads da sessão aparecem nas abas
-            populateReport(rd);
+            await populateReport(rd);
             showScreen('screen-report');
             document.getElementById('view-switcher').classList.add('visible');
             document.getElementById('btn-voltar').style.display = 'inline-flex';
@@ -3212,12 +3212,12 @@ body.edit-mode #topbar {
         }
 
         /* ===== POPULAR RELATÓRIO ===== */
-        function populateReport(rd) {
+        async function populateReport(rd) {
             populateCapa(rd);
             populateBasico(rd);
             populateExecutivo(rd);
             populateAnalista(rd);
-            populateComite(rd);
+            await populateComite(rd);
         }
 
         function populateCapa(rd) {
@@ -5137,7 +5137,7 @@ body.edit-mode #topbar {
 
         async function submeterComite(aid) {
             await salvarParecerAnalista(aid);
-            if (reportData) populateComite(reportData);
+            if (reportData) await populateComite(reportData);
             switchView('comite');
             showToast('Análise submetida ao comitê.', 'info');
         }
@@ -6317,7 +6317,7 @@ body.edit-mode #topbar {
             grupoIniciarPolling(grupoAtual.id);
         }
 
-        function grupoIniciarPolling(grupoId) {
+        async function grupoIniciarPolling(grupoId) {
             grupoStopPolling();
             grupoPollingInterval = setInterval(async () => {
                 try {
@@ -6620,7 +6620,7 @@ body.edit-mode #topbar {
             }
         }
 
-        function grupoConsPollingStart(grupoId) {
+        async function grupoConsPollingStart(grupoId) {
             grupoConsPollingStop();
             const container = document.getElementById('gp-consolidado-container');
             if (container) container.innerHTML = grupoConsTemplateProcessing();
@@ -6986,7 +6986,7 @@ body.edit-mode #topbar {
                 if (typeof window.etapa2RerenderTela === 'function') {
                     window.etapa2RerenderTela();
                 } else if (typeof populateReport === 'function' && typeof reportData !== 'undefined' && reportData) {
-                    populateReport(reportData);
+                    await populateReport(reportData);
                 }
                 if (typeof showToast === 'function') showToast('Edição salva.', 'success');
             } catch (e) {
@@ -7011,7 +7011,7 @@ body.edit-mode #topbar {
         }
 
         // Toggle global do modo edição (botão no topbar)
-        function toggleEditMode() {
+        async function toggleEditMode() {
             if (!podeEditar()) {
                 if (typeof showToast === 'function') showToast('Sem permissão para editar.', 'warn');
                 return;
@@ -7027,7 +7027,7 @@ body.edit-mode #topbar {
             if (typeof window.etapa2RerenderTela === 'function') {
                 window.etapa2RerenderTela();
             } else if (typeof populateReport === 'function' && typeof reportData !== 'undefined' && reportData) {
-                populateReport(reportData);
+                await populateReport(reportData);
             }
         }
 
