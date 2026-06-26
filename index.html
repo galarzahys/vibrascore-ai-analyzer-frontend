@@ -148,8 +148,8 @@ h1,h2,h3,h4,h5,h6,.score-num,.gauge-val { font-family: 'Nunito', Arial, sans-ser
   background: var(--primary); color: #fff;
   padding: 0; /* uses topbar */
 }
-.menu-content { flex: 1; padding: 28px 32px; max-width: 1200px; width: 100%; margin: 0 auto; }
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.menu-content { flex: 1; padding: 28px 32px; width: 90%; margin: 0 auto; }
+.stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
 .stat-card {
   background: var(--white); border-radius: var(--radius); padding: 20px;
   box-shadow: var(--shadow); border-left: 4px solid var(--accent);
@@ -202,12 +202,17 @@ h1,h2,h3,h4,h5,h6,.score-num,.gauge-val { font-family: 'Nunito', Arial, sans-ser
 .status-pill.processing { background: #dbeafe; color: #1e40af; }
 .status-pill.error { background: #fee2e2; color: #991b1b; }
 .status-pill.pending { background: #f3f4f6; color: #6b7280; }
+.status-pill.aguardando_comite { background: #ede9fe; color: #5b21b6;}
+.status-pill.em_deliberacao { background: #fef3c7; color: #92400e;}
+.status-pill.aprovado { background: #d1fae5; color: #065f46;}
+.status-pill.aprovado_com_ressalvas { background: #dbeafe; color: #1e40af; }
+.status-pill.recusado { background: #fee2e2; color: #991b1b;}
 .empty-state { text-align: center; padding: 64px 32px; color: var(--secondary); }
 .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
 
 /* ===== UPLOAD / WIZARD ===== */
 #screen-upload { flex-direction: column; }
-.upload-content { flex: 1; padding: 24px 32px; max-width: 900px; width: 100%; margin: 0 auto; }
+.upload-content { flex: 1; padding: 24px 32px; width: 90%; margin: 0 auto; }
 .wizard-steps { display: flex; gap: 0; margin-bottom: 28px; }
 .wizard-step {
   flex: 1; padding: 12px 16px; text-align: center; font-size: 12px; font-weight: 600;
@@ -293,6 +298,10 @@ input[type="file"] { display: none; }
 .historico-grid .full { grid-column: 1/-1; }
 .diretrizes-box { margin-top: 20px; }
 
+.no-display {
+    display: none;
+}
+
 /* ===== LOADING OVERLAY ===== */
 #loading-overlay {
   position: fixed; inset: 0; z-index: 9999;
@@ -364,7 +373,7 @@ input[type="file"] { display: none; }
 .section-block { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
 .section-block h3 { font-family: 'Nunito', Arial, sans-serif; font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 14px; }
 .restricoes-list { display: flex; flex-direction: column; gap: 8px; }
-.restricao-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+.restricao-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;font-size: 13px; border-bottom: 1px solid #c1c1c1; gap: 40px; }
 .restricao-item.ok { background: #f0fdf4; }
 .restricao-item.alert { background: #fef3c7; }
 .restricao-item.danger { background: #fef2f2; }
@@ -1131,7 +1140,7 @@ body.edit-mode #topbar {
 
     <!-- ===== VIEW SWITCHER ===== -->
     <div id="view-switcher">
-        <button class="view-btn active" onclick="switchView('basico')">Básico</button>
+        <button class="view-btn active" onclick="switchView('basico')">Resumo</button>
         <button class="view-btn" onclick="switchView('executivo')">Executivo</button>
         <button class="view-btn" onclick="switchView('analista')">Analista</button>
         <button class="view-btn" id="btn-view-comite" onclick="switchView('comite')">Comitê</button>
@@ -1141,7 +1150,8 @@ body.edit-mode #topbar {
     <div id="screen-login" class="screen on">
         <div class="login-box">
             <div class="login-brand">
-                <div class="brand-name">Vibra<em>Score</em></div>
+                <!--<div class="brand-name">Vibra<em>Score</em></div>-->
+                <img src="https://vibrascore-test.s3.sa-east-1.amazonaws.com/Vibra-ia.png" style="height: 150px;" />
                 <div class="tagline">Clareza para analisar. Controle para decidir.</div>
             </div>
             <div id="login-error" class="login-error"></div>
@@ -1169,24 +1179,35 @@ body.edit-mode #topbar {
                 <!-- RODADA Q INICIO -->
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                     <button class="btn btn-primary" onclick="novaAnalise()">+ Nova Análise</button>
-                    <button class="btn btn-primary gp-btn-novo-grupo" onclick="novaAnaliseGrupo()">+ Nova Análise de Grupo</button>
+                    <!--<button class="btn btn-primary gp-btn-novo-grupo" onclick="novaAnaliseGrupo()">+ Nova Análise de Grupo</button>-->
                 </div>
                 <!-- RODADA Q FIM -->
             </div>
             <div class="stats-row" id="stats-row">
-                <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Total de Análises</div></div>
+                <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Total</div></div>
+                <div class="stat-card" style="border-color:var(--warn);"><div class="stat-val" id="stat-pendentes" style="color:var(--warn);">0</div><div class="stat-label">Pendentes</div></div>
+                <div class="stat-card" style="border-color:var(--primary);"><div class="stat-val" id="stat-concluidas" style="color:var(--primary);">0</div><div class="stat-label">Concluídas</div></div>
                 <div class="stat-card" style="border-color:var(--accent);"><div class="stat-val" id="stat-aprovadas" style="color:var(--accent);">0</div><div class="stat-label">Aprovadas</div></div>
                 <div class="stat-card" style="border-color:var(--danger);"><div class="stat-val" id="stat-recusadas" style="color:var(--danger);">0</div><div class="stat-label">Recusadas</div></div>
-                <div class="stat-card" style="border-color:var(--warn);"><div class="stat-val" id="stat-pendentes" style="color:var(--warn);">0</div><div class="stat-label">Pendentes</div></div>
             </div>
             <div class="menu-toolbar">
                 <div class="filter-tabs">
                     <button class="filter-tab active" onclick="setFilter('todos')">Todos</button>
-                    <button class="filter-tab" onclick="setFilter('aprovados')">Aprovados</button>
-                    <button class="filter-tab" onclick="setFilter('recusados')">Recusados</button>
                     <button class="filter-tab" onclick="setFilter('pendentes')">Pendentes</button>
+                    <button class="filter-tab" onclick="setFilter('aguardando_comite')">Aguard. Comitê</button>
+                    <button class="filter-tab" onclick="setFilter('em_deliberacao')">Em Deliberação</button>
+                    <button class="filter-tab" onclick="setFilter('concluidas')">Concluídas</button>
+                    <button class="filter-tab" onclick="setFilter('aprovados')">Aprovadas</button>
+                    <button class="filter-tab" onclick="setFilter('recusados')\">Recusadas</button>
                 </div>
-                <input type="text" class="search-box" id="search-box" placeholder="Buscar empresa ou CNPJ..." oninput="renderAnalyses()">
+                <input type="text" class="search-box" id="search-box" placeholder="Buscar empresa ou CNPJ..." oninput="paginaAtual=1; renderAnalyses()">
+                <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                    <label style="color:var(--secondary);font-weight:600;white-space:nowrap;">Período:</label>
+                    <input type="date" id="filtro-data-ini" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;" onchange="paginaAtual=1;renderAnalyses()">
+                    <span style="color:var(--secondary);">até</span>
+                    <input type="date" id="filtro-data-fim" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;" onchange="paginaAtual=1;renderAnalyses()">
+                    <button class="btn btn-secondary btn-sm" onclick="limparFiltroPeriodo()">✕</button>
+                </div>
             </div>
             <div id="analyses-container">
                 <table class="analyses-table" id="analyses-table">
@@ -1204,6 +1225,10 @@ body.edit-mode #topbar {
                     </thead>
                     <tbody id="analyses-tbody"></tbody>
                 </table>
+                <div id="paginador" style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px;font-size:13px;color:var(--secondary);">
+                    <span id="pag-info"></span>
+                    <div style="display:flex;gap:6px;" id="pag-botoes"></div>
+                </div>
                 <div class="empty-state" id="empty-state" style="display:none;">
                     <div class="icon">📋</div>
                     <div style="font-weight:600;color:var(--primary);font-size:16px;">Nenhuma análise encontrada</div>
@@ -1492,12 +1517,24 @@ body.edit-mode #topbar {
 
         <!-- VISÃO BÁSICO -->
         <div class="view-pane on" id="view-basico">
-            <div class="cards-grid" id="basico-cards"></div>
+            <div class="cards-grid no-display" id="basico-cards" style="display: none;"></div>
             <div class="two-col" style="gap:16px;">
                 <div>
-                    <div class="section-block">
+                    <div class="section-block" style="display: none;">
                         <h3>Restrições &amp; Cadastro</h3>
                         <div class="restricoes-list" id="restricoes-list"></div>
+                    </div>
+                    <div class="section-block" id="comite-reg-basico" style="display:none;">
+                        <h3>Status Atual</h3>
+                        <div id="comite-reg-content"></div>
+                        <div id="obs-posteriores-block" style="display:none;margin-top:16px;">
+                            <label style="font-size:12px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.5px;">📝 Observações Posteriores</label>
+                            <div id="obs-posteriores-lista" style="margin:8px 0;display:flex;flex-direction:column;gap:8px;"></div>
+                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                <textarea id="obs-posteriores-input" rows="2" placeholder="Adicionar observação..." style="flex:1;border:1.5px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:Arial;resize:vertical;"></textarea>
+                                <button class="btn btn-primary btn-sm" onclick="salvarObsPosterior()" style="align-self:flex-end;">Adicionar</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="section-block">
                         <h3>QSA — Sócios</h3>
@@ -1505,15 +1542,16 @@ body.edit-mode #topbar {
                     </div>
                 </div>
                 <div>
+                    <div class="section-block" style="margin-bottom:16px;" id="basico-timeline-block">
+                        <h3>📅 Linha do Tempo</h3>
+                        <div id="basico-timeline"></div>
+                    </div>
                     <div class="section-block">
                         <h3>Documentos Anexados</h3>
                         <div id="docs-list-basico"></div>
                     </div>
-                    <div class="section-block" id="comite-reg-basico" style="display:none;">
-                        <h3>Registro do Comitê</h3>
-                        <div id="comite-reg-content"></div>
-                    </div>
                 </div>
+
             </div>
         </div>
 
@@ -1527,9 +1565,10 @@ body.edit-mode #topbar {
                         <!-- arco colorido -->
                         <path id="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--accent)" stroke-width="18" stroke-linecap="round"
                               stroke-dasharray="251.33" stroke-dashoffset="251.33" />
-                        <!-- agulha -->
-                        <line id="gauge-needle" x1="100" y1="100" x2="100" y2="28" stroke="var(--primary)" stroke-width="3" stroke-linecap="round"
-                              transform-origin="100 100" />
+                        <!-- agulha dentro de um grupo com transform-box -->
+                        <g id="gauge-needle-g" style="transform-origin: 100px 100px; transform: rotate(-90deg);">
+                            <line x1="100" y1="100" x2="100" y2="28" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" />
+                        </g>
                         <!-- ponto central -->
                         <circle cx="100" cy="100" r="6" fill="var(--primary)" />
                         <!-- labels de extremidade -->
@@ -1545,6 +1584,10 @@ body.edit-mode #topbar {
                     <div class="scores-decomp" id="scores-decomp"></div>
                 </div>
             </div>
+
+            <div id="exec-pareceres-analistas"></div>
+
+            <h3>Resultados Análise Inteligente Vibra - IA</h3>
             <div class="limite-box">
                 <div>
                     <div class="ll">Limite Recomendado <span id="exec-limite-fb"></span></div>
@@ -1571,31 +1614,13 @@ body.edit-mode #topbar {
                     </div>
                 </div>
             </div>
+
             <div class="section-block">
                 <h3>Parecer da Análise Inteligente Vibra</h3>
                 <p id="exec-parecer" style="font-size:13px;line-height:1.7;color:var(--text);"></p>
                 <div id="exec-condicionantes" style="margin-top:14px;"></div>
             </div>
-            <div class="section-block">
-                <h3>Avaliação do Analista</h3>
-                <div class="analista-eval">
-                    <div class="form-group">
-                        <label>Parecer do Analista</label>
-                        <textarea id="analista-parecer" rows="4" placeholder="Escreva seu parecer personalizado..."></textarea>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-                        <div class="form-group">
-                            <label>Limite próprio sugerido (R$)</label>
-                            <input type="number" id="analista-limite" placeholder="0,00">
-                        </div>
-                        <div class="form-group">
-                            <label>Pontos adicionais</label>
-                            <input type="text" id="analista-pontos" placeholder="Observações adicionais">
-                        </div>
-                    </div>
-                    <button class="btn btn-secondary btn-sm" onclick="salvarAvaliacaoAnalista()">💾 Salvar Avaliação</button>
-                </div>
-            </div>
+
         </div>
 
         <!-- VISÃO ANALISTA -->
@@ -1608,13 +1633,13 @@ body.edit-mode #topbar {
         <div class="view-pane" id="view-comite">
             <div id="comite-status-area"></div>
             <!-- contexto rápido -->
-            <div class="two-col" style="gap:16px;margin-bottom:20px;">
+            <div style="gap:16px;margin-bottom:20px;">
                 <div class="section-block">
                     <h3>Resumo para Deliberação</h3>
                     <div id="comite-resumo"></div>
                 </div>
                 <div class="section-block">
-                    <h3>Parecer do Analista</h3>
+                    <h3>Parecer dos Analistas</h3>
                     <div id="comite-parecer-analista" style="font-size:13px;color:var(--text);line-height:1.6;"></div>
                 </div>
             </div>
@@ -1642,6 +1667,10 @@ body.edit-mode #topbar {
             <!-- decisão -->
             <div class="section-block" id="decisao-block">
                 <h3>Registrar Decisão Final</h3>
+                <div class="form-group full" id="decisao-qsa-tags-block">
+                    <label>Tags dos Sócios</label>
+                    <div id="decisao-qsa-tags-list" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>
+                </div>
                 <div class="decisao-form" id="decisao-form-area">
                     <div class="form-group">
                         <label>Status da Decisão</label>
@@ -1661,7 +1690,7 @@ body.edit-mode #topbar {
                     </div>
                     <div class="form-group">
                         <label>Validade</label>
-                        <input type="text" id="decisao-validade" placeholder="Ex: 30/12/2026">
+                        <input type="date" id="decisao-validade" placeholder="Ex: 30/12/2026">
                     </div>
                     <div class="form-group">
                         <label>Taxa</label>
@@ -1676,7 +1705,10 @@ body.edit-mode #topbar {
                         <textarea id="decisao-obs" rows="3" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:Arial;"></textarea>
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="registrarDecisao()" id="btn-registrar-decisao">Registrar Decisão Final</button>
+                <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="registrarDecisao()" id="btn-registrar-decisao">Registrar Decisão Final</button>
+                    <button class="btn btn-secondary" onclick="devolverParaRevisao(reportData?.analysis_id)" id="btn-devolver-revisao" style="display:none;">↩ Devolver para Revisão</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1723,6 +1755,7 @@ body.edit-mode #topbar {
                     <div id="admin-usuarios-list"></div>
                 </div>
                 <div class="admin-pane" id="admin-documentos">
+                    <button class="btn btn-primary btn-sm" onclick="abrirNovoDoc()">+ Novo Documento</button>
                     <div style="margin-bottom:14px;font-weight:700;color:var(--primary);font-size:14px;">Checklist de Documentos</div>
                     <div id="admin-docs-list"></div>
                 </div>
@@ -1794,7 +1827,7 @@ body.edit-mode #topbar {
                 <label>Perfil</label>
                 <select id="uu-perfil">
                     <option value="analista">Analista</option>
-                    <option value="gestor">Gestor</option>
+                    <option value="gerente">Gerente</option>
                     <option value="comite">Comitê</option>
                     <option value="admin">Admin (tenant)</option>
                 </select>
@@ -1830,6 +1863,33 @@ body.edit-mode #topbar {
         </div>
     </div>
 
+    <!-- MODAL DOCUMENTOS -->
+
+    <div id="modal-doc" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+        <div style="background:var(--white);border-radius:var(--radius-lg);padding:28px;width:420px;max-width:95vw;box-shadow:var(--shadow-lg);">
+            <div style="font-family:'Nunito',Arial,sans-serif;font-weight:800;font-size:18px;color:var(--primary);margin-bottom:16px;">Documento</div>
+            <input type="hidden" id="doc-idx">
+            <div class="form-group"><label>Nome do documento</label><input type="text" id="doc-label" placeholder="Ex: Declaração de Faturamento"></div>
+            <div class="form-group"><label>field_key (identificador único)</label><input type="text" id="doc-field-key" placeholder="Ex: faturamento_2024"></div>
+            <div class="form-group">
+                <label>Obrigatoriedade</label>
+                <select id="doc-required">
+                    <option value="obrigatorio">Obrigatório</option>
+                    <option value="opcional">Opcional</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Formatos aceitos</label><input type="text" id="doc-formats" placeholder=".pdf,.xlsx"></div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="doc-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn btn-primary" onclick="salvarDoc()">Salvar</button>
+                <button class="btn btn-secondary" onclick="fecharModalDoc()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LIGHTBOX -->
     <div id="lightbox">
         <button id="lightbox-close" onclick="fecharLightbox()">✕</button>
@@ -1840,8 +1900,8 @@ body.edit-mode #topbar {
     <div class="toast" id="toast"></div>
 
     <script>
-        //const API = 'http://127.0.0.1:8000/api';
-        const API = '/api';
+        //const API = 'http://127.0.0.1:8000/api'; //TEST
+        const API = '/api'; //PROD
 
         /* ===== PDF.JS CONFIG ===== */
         if (window['pdfjsLib']) {
@@ -2199,8 +2259,15 @@ body.edit-mode #topbar {
             // ETAPA 4 FIM
         ];
 
-        function getDocChecklist() {
-            return DOC_CHECKLIST_DEFAULT;
+        async function getDocChecklist() {
+            try {
+                const r = await fetch(API + '/admin/doc-checklist');
+                if (r.ok) {
+                    const docs = await r.json();
+                    if (docs.length) return docs.filter(d => d.ativo);
+                }
+            } catch (e) { }
+            return DOC_CHECKLIST_DEFAULT.filter(d => !d.isVisita && !d.isAnexo);
         }
 
         /* ===== USUÁRIOS ===== */
@@ -2354,10 +2421,10 @@ body.edit-mode #topbar {
             renderDocList();
         }
 
-        function renderDocList() {
+        async function renderDocList() {
             const list = document.getElementById('doc-list');
             list.innerHTML = '';
-            const checklist = getDocChecklist();
+            const checklist = await getDocChecklist();
             checklist.forEach(doc => {
                 const files = fieldFiles[doc.field_key]?.files || [];
                 const hasFiles = files.length > 0;
@@ -2553,7 +2620,7 @@ body.edit-mode #topbar {
             }
         }
 
-        function removerArquivo(fieldKey, fi) {
+        async function removerArquivo(fieldKey, fi) {
             if (!fieldFiles[fieldKey]?.files) return;
             fieldFiles[fieldKey].files.splice(fi, 1);
             if (fieldFiles[fieldKey].files.length === 0) delete fieldFiles[fieldKey];
@@ -2566,7 +2633,7 @@ body.edit-mode #topbar {
                 const filesEl = document.getElementById('doc-files-' + fieldKey);
                 if (filesEl) filesEl.remove();
                 const tag = document.getElementById('doc-req-' + fieldKey);
-                const checklist = getDocChecklist();
+                const checklist = await getDocChecklist();
                 const doc = checklist.find(d => d.field_key === fieldKey);
                 if (tag && doc) {
                     const isRequired = doc.required === 'hard' || doc.required === 'obrigatorio';
@@ -2588,7 +2655,7 @@ body.edit-mode #topbar {
 
         async function uploadDocumento(fieldKey, file, fi) {
             const SKIP_UPLOAD_KEYS = ['visita-audio', 'visita-video', 'visita-fotos', 'visita-doc', 'anexos'];
-            const checklist = getDocChecklist();
+            const checklist = await getDocChecklist();
             const docDef = checklist.find(d => d.field_key === fieldKey);
 
             // ETAPA 4 — outros bureaus seguem caminho rápido (sem análise client-side pesada que trava com múltiplos PDFs)
@@ -2961,66 +3028,155 @@ body.edit-mode #topbar {
             // No-op: el backend ya persiste todo al procesar la análisis
         }
 
-        function atualizarStatusComite(aid, statusDecisao) {
-            const list = getAnalyses();
-            const idx = list.findIndex(a => a.id === aid);
-            if (idx >= 0) {
-                list[idx].statusComite = statusDecisao;
-                list[idx].status = statusDecisao;
-                saveAnalyses(list);
-            }
+        async function atualizarStatusComite(aid, statusDecisao) {
+            try {
+                // actualizar en el backend via análisis list cache
+                const idx = allAnalyses.findIndex(a => a.id === aid);
+                if (idx >= 0) {
+                    allAnalyses[idx].statusComite = statusDecisao;
+                }
+            } catch (e) { }
         }
 
         /* ===== MENU RENDER ===== */
         function renderStats() {
-            const list = allAnalyses;
-            allAnalyses = list;
+            const list = allAnalyses.filter(a => a.status !== 'error' && a.status !== 'pending');
+            const conDecision = ['aprovado', 'aprovado_com_ressalvas', 'recusado'];
+
             document.getElementById('stat-total').textContent = list.length;
-            document.getElementById('stat-aprovadas').textContent = list.filter(a => a.status === 'Aprovado' || a.status === 'Aprovado com Condicionantes').length;
-            document.getElementById('stat-recusadas').textContent = list.filter(a => a.status === 'Recusado').length;
-            document.getElementById('stat-pendentes').textContent = list.filter(a => a.status === 'Finalizado' || a.status === 'Pendente').length;
+            document.getElementById('stat-pendentes').textContent = list.filter(a =>
+                !conDecision.includes(a.status)
+            ).length;
+            document.getElementById('stat-aprovadas').textContent = list.filter(a =>
+                ['aprovado', 'aprovado_com_ressalvas'].includes(a.status)
+            ).length;
+            document.getElementById('stat-recusadas').textContent = list.filter(a =>
+                a.status === 'recusado'
+            ).length;
+            document.getElementById('stat-concluidas').textContent = list.filter(a =>
+                conDecision.includes(a.status)
+            ).length;
         }
+
+        let paginaAtual = 1;
+        const ITEMS_POR_PAGINA = 15;
 
         function setFilter(f) {
             filterAtivo = f;
+            paginaAtual = 1; // resetar página al cambiar filtro
             document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
             renderAnalyses();
         }
 
+        function limparFiltroPeriodo() {
+            document.getElementById('filtro-data-ini').value = '';
+            document.getElementById('filtro-data-fim').value = '';
+            paginaAtual = 1;
+            renderAnalyses();
+        }
+
         async function renderAnalyses() {
-            const list = allAnalyses;
-            allAnalyses = list;
+            let list = allAnalyses;
             const search = (document.getElementById('search-box').value || '').toLowerCase();
+
+            // filtro por perfil
+            if (currentUser?.perfil === 'comite') {
+                const estadosVisibles = ['aguardando_comite', 'em_deliberacao', 'aprovado', 'aprovado_com_ressalvas', 'recusado'];
+                list = list.filter(a => estadosVisibles.includes(a.status));
+            }
+
+            // filtro por busca y tab
             let filtered = list.filter(a => {
-                const match = (a.empresa + a.cnpj).toLowerCase().includes(search);
+                const match = ((a.empresa || '') + (a.cnpj || '')).toLowerCase().includes(search);
                 if (!match) return false;
-                if (filterAtivo === 'aprovados') return a.status === 'Aprovado' || a.status === 'Aprovado com Condicionantes';
-                if (filterAtivo === 'recusados') return a.status === 'Recusado';
-                if (filterAtivo === 'pendentes') return a.status === 'Finalizado' || a.status === 'Pendente';
-                return true;
+                if (filterAtivo === 'aprovados') return ['aprovado', 'aprovado_com_ressalvas'].includes(a.status);
+                if (filterAtivo === 'recusados') return a.status === 'recusado';
+                if (filterAtivo === 'pendentes') return !['aprovado', 'aprovado_com_ressalvas', 'recusado', 'error', 'pending'].includes(a.status);
+                if (filterAtivo === 'concluidas') return ['aprovado', 'aprovado_com_ressalvas', 'recusado'].includes(a.status);
+                if (filterAtivo === 'aguardando_comite') return a.status === 'aguardando_comite';
+                if (filterAtivo === 'em_deliberacao') return a.status === 'em_deliberacao';
+                if (filterAtivo === 'concluidas') return ['aprovado', 'aprovado_com_ressalvas', 'recusado'].includes(a.status);
+                return a.status !== 'error' && a.status !== 'pending';
             });
+
+            // filtro de período
+            const dataIni = document.getElementById('filtro-data-ini')?.value;
+            const dataFim = document.getElementById('filtro-data-fim')?.value;
+            if (dataIni || dataFim) {
+                filtered = filtered.filter(a => {
+                    if (!a.data) return false;
+                    // a.data viene en formato dd/mm/yyyy
+                    const partes = a.data.split('/');
+                    if (partes.length !== 3) return false;
+                    const dataA = `${partes[2]}-${partes[1]}-${partes[0]}`; // yyyy-mm-dd
+                    if (dataIni && dataA < dataIni) return false;
+                    if (dataFim && dataA > dataFim) return false;
+                    return true;
+                });
+            }
+
+            // paginación
+            const total = filtered.length;
+            const totalPaginas = Math.max(1, Math.ceil(total / ITEMS_POR_PAGINA));
+            if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+            const inicio = (paginaAtual - 1) * ITEMS_POR_PAGINA;
+            const paginado = filtered.slice(inicio, inicio + ITEMS_POR_PAGINA);
+
+            // renderizar tabla
             const tbody = document.getElementById('analyses-tbody');
             tbody.innerHTML = '';
             document.getElementById('empty-state').style.display = filtered.length ? 'none' : 'block';
-            filtered.forEach((a, i) => {
+            document.getElementById('paginador').style.display = filtered.length ? 'flex' : 'none';
+
+            paginado.forEach((a, i) => {
+                const idx = allAnalyses.indexOf(a);
                 const classe = getScoreClass(a.score);
                 const tr = document.createElement('tr');
-                tr.onclick = () => abrirAnalise(list.findIndex(x => x.id === a.id));
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => abrirAnalise(idx);
                 tr.innerHTML = `
           <td style="font-weight:600;color:var(--primary);">${a.empresa}</td>
           <td style="color:var(--secondary);">${a.cnpj}</td>
           <td><span style="font-family:'Nunito',Arial,sans-serif;font-weight:700;color:var(--primary);">${a.vibraId || '—'}</span></td>
           <td><span class="score-badge ${classe}">${classe} · ${(a.score || 0).toFixed(1)}</span></td>
           <td>${formatCurrency(a.limite)}</td>
-          <td><span class="status-pill done">${a.status || 'Finalizado'}</span></td>
+          <td><span class="status-pill ${a.status}">${{ 'pending': 'Pendente', 'processing': 'Processando', 'done': 'Aguardando Parecer', 'error': 'Erro', 'aguardando_comite': 'Aguard. Comitê', 'em_deliberacao': 'Em Deliberação', 'aprovado': 'Aprovado', 'aprovado_com_ressalvas': 'Aprov. c/ Ressalvas', 'recusado': 'Recusado' }[a.status] || a.status}</span></td>
           <td style="color:var(--secondary);">${a.data}</td>
           <td style="color:var(--secondary);">${a.analista}</td>
         `;
                 tbody.appendChild(tr);
             });
-            // RODADA Q — adiciona grupos à mesma tabela
-            try { await grupoRenderLinhasNaTabela(tbody, search); } catch (e) { console.warn('grupoRenderLinhasNaTabela falhou:', e); }
+
+            // grupos
+            try { await grupoRenderLinhasNaTabela(tbody, search); } catch (e) { }
+
+            // renderizar paginador
+            const info = document.getElementById('pag-info');
+            const botoes = document.getElementById('pag-botoes');
+            info.textContent = `${inicio + 1}–${Math.min(inicio + ITEMS_POR_PAGINA, total)} de ${total}`;
+
+            // generar botones de página
+            let botoesHtml = '';
+            // anterior
+            botoesHtml += `<button onclick="irPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}
+        style="padding:5px 10px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);cursor:pointer;font-size:13px;${paginaAtual === 1 ? 'opacity:0.4;cursor:default;' : ''}">‹</button>`;
+
+            // páginas
+            for (let p = 1; p <= totalPaginas; p++) {
+                if (totalPaginas > 7 && Math.abs(p - paginaAtual) > 2 && p !== 1 && p !== totalPaginas) {
+                    if (p === 2 || p === totalPaginas - 1) botoesHtml += `<span style="padding:5px 4px;font-size:13px;">…</span>`;
+                    continue;
+                }
+                botoesHtml += `<button onclick="irPagina(${p})"
+            style="padding:5px 10px;border:1.5px solid ${p === paginaAtual ? 'var(--primary)' : 'var(--border)'};border-radius:6px;background:${p === paginaAtual ? 'var(--primary)' : 'var(--white)'};color:${p === paginaAtual ? '#fff' : 'var(--text)'};cursor:pointer;font-size:13px;font-weight:${p === paginaAtual ? '700' : '400'};">${p}</button>`;
+            }
+
+            // siguiente
+            botoesHtml += `<button onclick="irPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}
+        style="padding:5px 10px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);cursor:pointer;font-size:13px;${paginaAtual === totalPaginas ? 'opacity:0.4;cursor:default;' : ''}">›</button>`;
+
+            botoes.innerHTML = botoesHtml;
         }
 
         // ETAPA 5 — config global de scoring (limites e pesos), carregado do backend
@@ -3031,6 +3187,13 @@ body.edit-mode #topbar {
             limite_a: 900, limite_b: 800, limite_c: 700, limite_d: 600, limite_e: 500,
             limite_f: 400, limite_g: 300, limite_h: 200, limite_i: 100,
         };
+
+              function irPagina(p) {
+                  const totalPaginas = Math.ceil(allAnalyses.length / ITEMS_POR_PAGINA);
+                  if (p < 1 || p > totalPaginas) return;
+                  paginaAtual = p;
+                  renderAnalyses();
+              }
 
         async function carregarScoringConfig() {
             try {
@@ -3099,6 +3262,7 @@ body.edit-mode #topbar {
                     }
                 }
             } catch (e) {
+                console.log(e)
                 esconderLoading();
                 if (a.reportData) {
                     await abrirAnaliseComReport(a.id, a.reportData);
@@ -3126,7 +3290,26 @@ body.edit-mode #topbar {
             analysisId = aid;
             // ETAPA 2 — carrega overrides antes de renderizar
             await carregarOverrides(aid);
+            // actualizar status del análisis en allAnalyses desde el backend
+            try {
+                const sr = await fetch(API + '/analysis/' + aid + '/status');
+                if (sr.ok) {
+                    const sd = await sr.json();
+                    const idx = allAnalyses.findIndex(a => a.id === aid);
+                    if (idx >= 0) allAnalyses[idx].status = sd.status;
+                    if (reportData) reportData.status = sd.status;
+                }
+            } catch (e) { }
             await _fbLoadFromServer(aid);
+            try {
+                const r = await fetch(API + '/analysis/' + aid + '/parecer');
+                if (r.ok) {
+                    const arr = await r.json();
+                    _avCacheAll[aid] = arr;
+                    const meu = arr.find(p => p.email === currentUser?.email) || {};
+                    _avCache[aid] = meu;
+                }
+            } catch (e) { }
             sincronizarVisitFiles(); // garante que uploads da sessão aparecem nas abas
             await populateReport(rd);
             showScreen('screen-report');
@@ -3166,15 +3349,15 @@ body.edit-mode #topbar {
                         }
                     });
                     // re-popular básico com URLs corretas agora disponíveis
-                    if (reportData) populateBasico(reportData);
+                    if (reportData) await populateBasico(reportData);
                 }
             } catch (e) { }
         }
 
         // Sincroniza visitFiles a partir dos uploads locais (fieldFiles) feitos na sessão
-        function sincronizarVisitFiles() {
+        async function sincronizarVisitFiles() {
             const VISITA_ANEXO_KEYS = ['visita-audio', 'visita-video', 'visita-fotos', 'visita-doc', 'anexos'];
-            const checklist = getDocChecklist();
+            const checklist = await getDocChecklist();
             VISITA_ANEXO_KEYS.forEach(key => {
                 const entry = fieldFiles[key];
                 if (!entry?.files) return;
@@ -3214,8 +3397,8 @@ body.edit-mode #topbar {
         /* ===== POPULAR RELATÓRIO ===== */
         async function populateReport(rd) {
             populateCapa(rd);
-            populateBasico(rd);
-            populateExecutivo(rd);
+            await populateBasico(rd);
+            await populateExecutivo(rd);
             populateAnalista(rd);
             await populateComite(rd);
         }
@@ -3256,7 +3439,9 @@ body.edit-mode #topbar {
         }
 
         /* ===== BÁSICO ===== */
-        function populateBasico(rd) {
+        async function populateBasico(rd) {
+                  let comiteLocal = null;
+                  try { comiteLocal = await getComiteData(rd.analysis_id); } catch (e) { }
             const scores = rd.scores || {};
             const inds = rd.indicadores || {};
             const lim = rd.limite || {};
@@ -3312,14 +3497,21 @@ body.edit-mode #topbar {
             // QSA resumido
             const qsaList = document.getElementById('qsa-basico-list');
             qsaList.innerHTML = '';
+            const tagsQsa = comiteLocal?.tags_qsa || {};
             (rd.qsa || []).forEach(q => {
+                const tags = tagsQsa[q.nome] || [];
+                const tagsHtml = tags.length ? `
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+            ${tags.map(t => `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--primary);color:#fff;">${t}</span>`).join('')}
+        </div>` : '';
                 qsaList.innerHTML += `<div class="qsa-item">
-          <div class="qsa-avatar">${q.nome ? q.nome[0].toUpperCase() : '?'}</div>
-          <div>
+        <div class="qsa-avatar">${q.nome ? q.nome[0].toUpperCase() : '?'}</div>
+        <div style="flex:1;">
             <div class="qsa-name">${q.nome || '—'}</div>
             <div class="qsa-sub">${q.cargo || ''} · ${q.participacao_pct != null ? q.participacao_pct + '%' : ''} · ${q.geracao || ''}</div>
-          </div>
-        </div>`;
+            ${tagsHtml}
+        </div>
+    </div>`;
             });
 
             // documentos básico
@@ -3341,27 +3533,171 @@ body.edit-mode #topbar {
           </div>
           ${serverUrl ? `
             ${isImg ? `<button onclick="abrirLightbox('${serverUrl}')" class="btn btn-secondary btn-sm" style="white-space:nowrap;">🔍 Ver</button>` : ''}
-            ${isPdf ? `<a href="${serverUrl}" target="_blank" class="btn btn-secondary btn-sm" style="white-space:nowrap;">👁 Visualizar</a>` : ''}
+            <!--${isPdf ? `<a href="${serverUrl}" target="_blank" class="btn btn-secondary btn-sm" style="white-space:nowrap;">👁 Visualizar</a>` : ''}-->
             <a href="${serverUrl}" download="${doc.original_name || 'documento'}" class="btn btn-secondary btn-sm" style="white-space:nowrap;">⬇ Baixar</a>
           ` : '<span style="font-size:11px;color:var(--secondary);">URL indisponível</span>'}
         </div>`;
             });
 
             // comitê registro
-            const comiteLocal = getComiteData(rd.analysis_id);
-            if (comiteLocal && comiteLocal.decisao) {
+            try {
+                //const comiteLocal = await getComiteData(rd.analysis_id);
+                const ana = allAnalyses.find(a => a.id === rd.analysis_id) || {};
+                const statusAtual = ana.status || rd.status || 'done';
+
+                const STATUS_LABELS = {
+                    'done': 'Aguardando Parecer do Analista',
+                    'aguardando_comite': 'Enviado ao Comitê',
+                    'em_deliberacao': 'Em Deliberação',
+                    'aprovado': 'Aprovado',
+                    'aprovado_com_ressalvas': 'Aprovado com Ressalvas',
+                    'recusado': 'Recusado',
+                };
+                const STATUS_ICONS = {
+                    'done': '✍️',
+                    'aguardando_comite': '📨',
+                    'em_deliberacao': '⏳',
+                    'aprovado': '✅',
+                    'aprovado_com_ressalvas': '⚠️',
+                    'recusado': '❌',
+                };
+                const STATUS_COR = {
+                    'done': 'pendente',
+                    'aguardando_comite': 'pendente',
+                    'em_deliberacao': 'pendente',
+                    'aprovado': 'aprovado',
+                    'aprovado_com_ressalvas': 'aprovado',
+                    'recusado': 'recusado',
+                };
+
                 document.getElementById('comite-reg-basico').style.display = 'block';
-                const st = comiteLocal.decisao.status || '—';
-                document.getElementById('comite-reg-content').innerHTML = `
-          <div class="comite-status-banner ${st.toLowerCase().includes('aprovado') ? 'aprovado' : st === 'Recusado' ? 'recusado' : 'pendente'}">${st}</div>
-          <div style="font-size:13px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div><b>Limite aprovado:</b> ${formatCurrency(comiteLocal.decisao.limite)}</div>
-            <div><b>Prazo:</b> ${comiteLocal.decisao.prazo || '—'}</div>
-            <div><b>Taxa:</b> ${comiteLocal.decisao.taxa || '—'}</div>
-            <div><b>Validade:</b> ${comiteLocal.decisao.validade || '—'}</div>
-            ${comiteLocal.decisao.obs ? `<div style="grid-column:1/-1;"><b>Obs:</b> ${comiteLocal.decisao.obs}</div>` : ''}
-          </div>`;
-            }
+
+                let html = `
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg);border-radius:8px;margin-bottom:14px;">
+            <span style="font-size:28px;">${STATUS_ICONS[statusAtual] || '📋'}</span>
+            <div>
+                <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.5px;">Estado atual</div>
+                <div style="font-size:16px;font-weight:800;color:var(--primary);">${STATUS_LABELS[statusAtual] || statusAtual}</div>
+                ${comiteLocal?.votos?.length ? `<div style="font-size:12px;color:var(--secondary);margin-top:2px;">⚖️ ${comiteLocal.votos.length} voto(s) registrado(s)</div>` : ''}
+            </div>
+        </div>`;
+
+                // si hay decisión, mostrar detalles
+                if (comiteLocal?.decisao) {
+                    const d = comiteLocal.decisao;
+                    const cor = STATUS_COR[statusAtual] || 'pendente';
+                    html += `
+            <div class="comite-status-banner ${cor}" style="margin-bottom:14px;">${d.status}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:13px;">
+                ${d.limite ? `<div>
+                    <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Limite Aprovado</div>
+                    <div style="font-size:16px;font-weight:800;color:var(--accent);">${formatCurrency(parseFloat(d.limite))}</div>
+                </div>` : ''}
+                ${d.prazo ? `<div>
+                    <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Prazo</div>
+                    <div style="font-weight:600;">${d.prazo}</div>
+                </div>` : ''}
+                ${d.validade ? `<div>
+                    <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Validade</div>
+                    <div style="font-weight:600;">${d.validade}</div>
+                </div>` : ''}
+                ${d.taxa ? `<div>
+                    <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Taxa</div>
+                    <div style="font-weight:600;">${d.taxa}</div>
+                </div>` : ''}
+                ${d.garantias ? `<div>
+                    <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Garantias</div>
+                    <div style="font-weight:600;">${d.garantias}</div>
+                </div>` : ''}
+                <div>
+                    <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Registrado por</div>
+                    <div style="font-weight:600;">${d.registrado_por || '—'} · ${d.data || ''}</div>
+                </div>
+            </div>
+            ${d.obs ? `<div style="margin-top:10px;font-size:13px;color:var(--text);padding:10px 14px;background:var(--bg);border-radius:6px;border-left:3px solid var(--primary);">${d.obs}</div>` : ''}`;
+                }
+
+                document.getElementById('comite-reg-content').innerHTML = html;
+
+                // observaciones posteriores — solo si hay decisión
+                const obsBlock = document.getElementById('obs-posteriores-block');
+                if (obsBlock) {
+                    if (comiteLocal?.decisao) {
+                        obsBlock.style.display = 'block';
+                        renderObsPosteriores(comiteLocal.obs_posteriores || []);
+                    } else {
+                        obsBlock.style.display = 'none';
+                    }
+                }
+
+            } catch (e) { }
+
+            // ── LINHA DO TEMPO ─────────────────────────────────────────
+            try {
+                const comiteData = await getComiteData(rd.analysis_id);
+                const ana = allAnalyses.find(a => a.id === rd.analysis_id) || {};
+
+                const etapas = [
+                    {
+                        label: 'Análise iniciada',
+                        data: ana.data || '—',
+                        status: 'done',
+                        icon: '📋',
+                    },
+                    {
+                        label: 'Análise IA concluída',
+                        data: ana.data || '—',
+                        status: ['pending', 'processing', 'error'].includes(rd.status) ? 'pending' : 'done',
+                        icon: '🤖',
+                    },
+                    {
+                        label: 'Parecer do analista',
+                        data: (() => {
+                            const arr = _avCacheAll[rd.analysis_id] || [];
+                            if (!arr.length) return null;
+                            const ultimo = arr.reduce((a, b) => (a.ts || 0) > (b.ts || 0) ? a : b);
+                            return ultimo.ts ? new Date(ultimo.ts).toLocaleDateString('pt-BR') : null;
+                        })(),
+                        status: (_avCacheAll[rd.analysis_id] || []).length ? 'done' : 'pending',
+                        icon: '✍️',
+                        sub: (() => {
+                            const arr = _avCacheAll[rd.analysis_id] || [];
+                            return arr.length ? arr.map(p => p.nome || p.email).join(', ') : null;
+                        })(),
+                    },
+                    {
+                        label: 'Deliberação do comitê',
+                        data: comiteData?.decisao?.data || null,
+                        status: comiteData?.decisao ? 'done' : (comiteData?.votos?.length ? 'progress' : 'pending'),
+                        icon: '🏛️',
+                        sub: comiteData?.decisao?.status || (comiteData?.votos?.length ? `${comiteData.votos.length} voto(s) registrado(s)` : null),
+                        cor: comiteData?.decisao?.status?.includes('Aprovado') ? 'var(--accent)' :
+                            comiteData?.decisao?.status === 'Recusado' ? 'var(--danger)' : null,
+                    },
+                ];
+
+                const timelineEl = document.getElementById('basico-timeline');
+                if (timelineEl) {
+                    timelineEl.innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:0;">
+                ${etapas.map((e, i) => `
+                    <div style="display:flex;gap:14px;align-items:flex-start;position:relative;">
+                        <!-- linha vertical -->
+                        ${i < etapas.length - 1 ? `<div style="position:absolute;left:17px;top:34px;width:2px;height:calc(100% - 8px);background:${e.status === 'done' ? 'var(--accent)' : 'var(--border)'};"></div>` : ''}
+                        <!-- ícone -->
+                        <div style="width:34px;height:34px;border-radius:50%;background:${e.status === 'done' ? (e.cor || 'var(--accent)') : e.status === 'progress' ? 'var(--warn)' : 'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;z-index:1;">
+                            ${e.status === 'done' ? e.icon : e.status === 'progress' ? '⏳' : '⭕'}
+                        </div>
+                        <!-- contenido -->
+                        <div style="padding-bottom:20px;flex:1;">
+                            <div style="font-weight:700;font-size:13px;color:${e.status === 'done' ? 'var(--primary)' : 'var(--secondary)'};">${e.label}</div>
+                            ${e.data ? `<div style="font-size:11px;color:var(--secondary);margin-top:1px;">📅 ${e.data}</div>` : ''}
+                            ${e.sub ? `<div style="font-size:12px;color:${e.cor || 'var(--text)'};margin-top:2px;font-weight:${e.cor ? '700' : '400'};">${e.sub}</div>` : ''}
+                        </div>
+                    </div>`).join('')}
+            </div>`;
+                }
+            } catch (e) { }
         }
 
         function scoreColor(s) {
@@ -3371,7 +3707,7 @@ body.edit-mode #topbar {
             const cores = {
                 A: '#065f46', B: '#047857', C: '#10b981',  // verdes (excelente → bom)
                 D: '#1e40af', E: '#3b82f6',                // azuis (médio-alto)
-                F: '#d97706', G: '#9a3412',                // âmbar/laranja (atenção)
+                F: '#d97706', G: '#D33500',                // âmbar/laranja (atenção)
                 H: '#b91c1c', I: '#991b1b', J: '#7f1d1d',   // vermelhos (alto risco)
             };
             return cores[classe] || 'var(--secondary)';
@@ -3385,28 +3721,34 @@ body.edit-mode #topbar {
         }
 
         /* ===== EXECUTIVO ===== */
-        function populateExecutivo(rd) {
+        async function populateExecutivo(rd) {
             const scores = rd.scores || {};
             const lim = rd.limite || {};
             const score = scores.vibra_composto || 0;
             const classe = getScoreClass(score);
+            const aid = rd.analysis_id;
+
+            // Cargar feedbacks
+            const fbData = _fbLoad(aid);
+            const _fb = (aspect, idx) => _fbGetState(fbData, aspect, idx);
 
             // gauge
-            // ETAPA 5 — escala 0-1000 (com tolerância a análises legadas 0-100)
             const scoreNorm = score <= 100 ? score * 10 : score;
             document.getElementById('gauge-score').textContent = formatScoreDisplay(score);
             document.getElementById('gauge-class-badge').textContent = 'Classe ' + classe;
             document.getElementById('gauge-class-badge').className = 'gauge-class ' + classe;
             const arc = document.getElementById('gauge-arc');
             const needle = document.getElementById('gauge-needle');
+            const needleG = document.getElementById('gauge-needle-g');
             const pct = Math.min(scoreNorm / 1000, 1);
             const total = 251.33;
             arc.setAttribute('stroke-dashoffset', (total * (1 - pct)).toFixed(2));
             arc.setAttribute('stroke', scoreColor(score));
             const angle = -90 + (180 * pct);
-            needle.setAttribute('transform', `rotate(${angle}, 100, 100)`);
+            needleG.style.transform = `rotate(${angle}deg)`;
+            //needle.setAttribute('transform', `rotate(${angle}, 100, 100)`);
 
-            // decomposição — pesos do SCORING_CONFIG (Etapa 5), incluindo "bureau"
+            // decomposição
             const C = SCORING_CONFIG;
             const dims = [
                 { key: 'bureau', label: 'Bureau de Crédito', peso: C.peso_bureau },
@@ -3421,20 +3763,21 @@ body.edit-mode #topbar {
             decomp.innerHTML = '';
             dims.forEach(d => {
                 const v = scores[d.key] || 0;
-                const vNorm = v <= 100 ? v * 10 : v;        // tolerância a legado
-                const pctBar = Math.min(vNorm / 10, 100);    // barra 0-100% baseada em 0-1000
+                const vNorm = v <= 100 ? v * 10 : v;
+                const pctBar = Math.min(vNorm / 10, 100);
+                // opacidad proporcional al score: mínimo 0.15, máximo 1.0
+                const opacity = (0.15 + (pctBar / 100) * 0.85).toFixed(2);
+                const barColor = `rgba(60, 60, 255, ${opacity})`;
                 decomp.innerHTML += `<div class="score-row">
-          <span class="sname">${d.label} <span style="color:var(--secondary);font-size:10px;">${d.peso?.toFixed(0) || 0}%</span></span>
-          <div class="score-bar-bg"><div class="score-bar-fill" style="width:${pctBar.toFixed(1)}%;background:${scoreColor(v)};"></div></div>
-          <span class="sval" style="color:${scoreColor(v)};">${formatScoreDisplay(v)}</span>
-        </div>`;
+      <span class="sname" style="min-width:200px;">${d.label} <span style="color:var(--secondary);font-size:10px;">${d.peso?.toFixed(0) || 0}%</span></span>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:${pctBar.toFixed(1)}%;background:${barColor};"></div></div>
+      <span class="sval" style="color:${barColor};">${formatScoreDisplay(v)}</span>
+    </div>`;
             });
 
             // limite
             document.getElementById('exec-limite').textContent = formatCurrency(lim.recomendado);
             document.getElementById('exec-limite-mem').textContent = lim.memoria_calculo || '';
-
-            // ETAPA 5 — memória de cálculo do Score Composto
             if (scores._memoria_calculo) {
                 const memEl = document.getElementById('exec-limite-mem');
                 if (memEl) {
@@ -3444,14 +3787,13 @@ body.edit-mode #topbar {
                 }
             }
 
-            // RODADA M — toggles de feedback no Score e no Limite
-            const aid = rd.analysis_id;
+            // toggles de feedback
             const gFb = document.getElementById('gauge-fb');
             if (gFb) gFb.innerHTML = fbToggle('score', null, aid);
             const lFb = document.getElementById('exec-limite-fb');
             if (lFb) lFb.innerHTML = fbToggle('limite', null, aid);
 
-            // alertas
+            // alertas (sin filtro de feedback — son informativos)
             const alertas = document.getElementById('exec-alertas');
             alertas.innerHTML = '';
             (rd.pontos_atencao || []).forEach(p => {
@@ -3462,48 +3804,127 @@ body.edit-mode #topbar {
             });
             if (!alertas.innerHTML) alertas.innerHTML = '<div style="font-size:13px;color:var(--secondary);">Sem alertas registrados.</div>';
 
-            // pontos fortes
-            const pf = document.getElementById('exec-pontos-fortes');
-            pf.innerHTML = '';
-            (rd.pontos_fortes || []).forEach(p => {
-                pf.innerHTML += `<div class="ponto-item"><span class="ponto-icon">✅</span><span style="font-size:13px;">${p}</span></div>`;
+            // ── PONTOS FORTES — filtrar "down" ─────────────────────────
+            const pfEl = document.getElementById('exec-pontos-fortes');
+            pfEl.innerHTML = '';
+            const pfList = rd.pontos_fortes || [];
+            const pfHouveDown = pfList.some((_, i) => _fb('fortes', String(i)) === 'down');
+            if (pfHouveDown) {
+                pfEl.innerHTML += `<div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;margin-bottom:6px;letter-spacing:0.5px;">✏️ Editado pelo analista</div>`;
+            }
+            pfList.forEach((p, i) => {
+                if (_fb('fortes', String(i)) === 'down') return; // ocultar reprovados
+                pfEl.innerHTML += `<div class="ponto-item"><span class="ponto-icon">✅</span><span style="font-size:13px;">${p}</span></div>`;
             });
+            if (!pfEl.innerHTML) pfEl.innerHTML = '<div style="font-size:13px;color:var(--secondary);">Nenhum ponto forte registrado.</div>';
 
-            // pontos de atenção
-            const pa = document.getElementById('exec-pontos-atencao');
-            pa.innerHTML = '';
-            (rd.pontos_atencao || []).forEach(p => {
-                pa.innerHTML += `<div class="ponto-item"><span class="ponto-icon">${p.nivel === 'alto' ? '🔴' : '🟡'}</span><span style="font-size:13px;">${p.descricao}</span></div>`;
+            // ── PONTOS DE ATENÇÃO — filtrar "down" ────────────────────
+            const paEl = document.getElementById('exec-pontos-atencao');
+            paEl.innerHTML = '';
+            const paList = rd.pontos_atencao || [];
+            const paHouveDown = paList.some((_, i) => _fb('atencao', String(i)) === 'down');
+            if (paHouveDown) {
+                paEl.innerHTML += `<div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;margin-bottom:6px;letter-spacing:0.5px;">✏️ Editado pelo analista</div>`;
+            }
+            paList.forEach((p, i) => {
+                if (_fb('atencao', String(i)) === 'down') return;
+                paEl.innerHTML += `<div class="ponto-item"><span class="ponto-icon">${p.nivel === 'alto' ? '🔴' : '🟡'}</span><span style="font-size:13px;">${p.descricao}</span></div>`;
             });
+            if (!paEl.innerHTML) paEl.innerHTML = '<div style="font-size:13px;color:var(--secondary);">Sem pontos de atenção.</div>';
 
             // parecer
             document.getElementById('exec-parecer').textContent = rd.parecer || '—';
 
-            // condicionantes
+            // ── CONDICIONANTES — filtrar "down" ───────────────────────
             const cond = document.getElementById('exec-condicionantes');
             cond.innerHTML = '';
-            if (rd.condicionantes && rd.condicionantes.length) {
-                cond.innerHTML = '<div style="font-weight:700;font-size:12px;color:var(--secondary);text-transform:uppercase;margin-bottom:8px;">Condicionantes</div>';
-                rd.condicionantes.forEach(c => {
+            const condList = rd.condicionantes || [];
+            const condHouveDown = condList.some((_, i) => _fb('condicionantes', String(i)) === 'down');
+            if (condList.length) {
+                let header = '<div style="font-weight:700;font-size:12px;color:var(--secondary);text-transform:uppercase;margin-bottom:8px;">Condicionantes';
+                if (condHouveDown) header += ' <span style="font-size:11px;color:var(--warn);font-weight:700;">✏️ Editado pelo analista</span>';
+                header += '</div>';
+                cond.innerHTML = header;
+                condList.forEach((c, i) => {
+                    if (_fb('condicionantes', String(i)) === 'down') return;
                     cond.innerHTML += `<div style="display:flex;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);">
-            <span style="font-weight:700;color:var(--primary);">${c.numero}.</span><span>${c.descricao}</span>
-          </div>`;
+              <span style="font-weight:700;color:var(--primary);">${c.numero}.</span><span>${c.descricao}</span>
+            </div>`;
                 });
             }
 
-            // recuperar avaliação do analista
+            // ── PARECERES DOS ANALISTAS ────────────────────────────────
             try {
-                getAvAnalista(rd.analysis_id).then(av => {
-                    if (document.getElementById('analista-parecer')) {
-                        document.getElementById('analista-parecer').value = av.parecer || '';
-                        document.getElementById('analista-limite').value = av.limite || '';
-                        document.getElementById('analista-pontos').value = av.pontos || '';
-                    }
-                });
-            } catch (e) { }
+                const arr = _avCacheAll[rd.analysis_id] ||
+                    await fetch(API + '/analysis/' + rd.analysis_id + '/parecer')
+                        .then(r => r.json()).catch(() => []);
+                _avCacheAll[rd.analysis_id] = arr;
+
+                // también poblar los campos hidden del usuario actual (para la aba analista)
+                const meu = arr.find(p => p.email === currentUser?.email) || {};
+                if (document.getElementById('analista-parecer'))
+                    document.getElementById('analista-parecer').value = meu.parecer || '';
+                if (document.getElementById('analista-limite'))
+                    document.getElementById('analista-limite').value = meu.limite || '';
+
+                const container = document.getElementById('exec-pareceres-analistas');
+                if (!container) return;
+
+                if (!arr.length) {
+                    container.innerHTML = '<div style="font-size:13px;color:var(--secondary);padding:12px 0;">Nenhum parecer registrado.</div>';
+                    return;
+                }
+
+                const renderItemList = (items) => {
+                    if (!items || !items.length) return '<div style="font-size:12px;color:var(--secondary);">—</div>';
+                    return items.map(item =>
+                        `<div style="padding:6px 10px;background:var(--bg);border-radius:6px;font-size:13px;margin-bottom:4px;">${item}</div>`
+                    ).join('');
+                };
+
+                container.innerHTML = arr.map(p => `
+        <div class="section-block" style="margin-bottom:16px;">
+            <h3>Avaliação — ${p.nome || p.email} ${p.cargo ? `<span style="font-size:12px;font-weight:400;color:var(--secondary);">(${p.cargo})</span>` : ''} ${p.ts ? `<span style="font-size:11px;font-weight:400;color:var(--secondary);margin-left:8px;">· ${new Date(p.ts).toLocaleDateString('pt-BR')}</span>` : ''}</h3>
+            <div class="analista-eval">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                    <div class="form-group">
+                        <h3>🔥 Limite recomendado pelo analista</h3>
+                        <h4 style="font-size:22px;font-weight:800;color:var(--primary);margin:4px 0 8px;">
+                            ${p.limite ? formatCurrency(parseFloat(p.limite)) : 'R$ —'}
+                        </h4>
+                        <div style="margin-top:20px;">
+                            <h3>✅ Pontos fortes identificados pelo analista</h3>
+                            <div style="margin-bottom:10px;display:flex;flex-direction:column;gap:6px;">
+                                ${renderItemList(p.pontos_fortes)}
+                            </div>
+                            <h3>⚠️ Pontos de atenção identificados pelo analista</h3>
+                            <div style="margin-bottom:10px;display:flex;flex-direction:column;gap:6px;">
+                                ${renderItemList(p.pontos_atencao)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <h3>📋 Condicionantes do analista</h3>
+                        <div style="margin-bottom:10px;display:flex;flex-direction:column;gap:6px;">
+                            ${renderItemList(p.condicionantes)}
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Parecer do Analista</label>
+                    <div style="font-size:14px;color:var(--primary);margin:4px 0 8px;padding:10px;background-color:#fff;border-radius:5px;">
+                        ${p.parecer || '—'}
+                    </div>
+                </div>
+                ${p.notas_finais ? `<div style="font-size:12px;color:var(--secondary);margin-top:6px;">📌 ${p.notas_finais}</div>` : ''}
+            </div>
+        </div>`).join('');
+
+            } catch (e) { console.warn('populateExecutivo parecer error:', e); }
+
         }
 
-        function salvarAvaliacaoAnalista() {
+        async function salvarAvaliacaoAnalista() {
             if (!reportData) return;
             const av = getAvAnalista(reportData.analysis_id);
             av.parecer = av.parecer || document.getElementById('analista-parecer').value;
@@ -3511,6 +3932,8 @@ body.edit-mode #topbar {
             av.pontos_extras = document.getElementById('analista-pontos').value;
             _saveAvAnalista(reportData.analysis_id, av);
             showToast('Avaliação salva.', 'success');
+            if (reportData) await populateExecutivo(reportData);
+            if (reportData) await populateComite(reportData);
         }
 
         /* ===== ANALISTA — 13 ABAS ===== */
@@ -3528,7 +3951,6 @@ body.edit-mode #topbar {
             { id: 'grupo', label: 'Grupo Econômico' },
             { id: 'parecer-ia', label: 'Parecer IA' },
             { id: 'parecer-analista', label: 'Parecer Analista' },
-            { id: 'comite-aba', label: 'Comitê' },
         ];
 
         function populateAnalista(rd) {
@@ -4222,16 +4644,16 @@ body.edit-mode #topbar {
                     html = `<div class="section-block">
             <h3>Análise de Restrições Cadastrais</h3>
             <div class="restricoes-list">
-              <div class="restricao-item ${_pefinSim ? 'danger' : 'ok'}">
+              <div class="restricao-item">
                 <span>PEFIN / REFIN / Protestos</span><span style="font-weight:600;">${renderField('tributario.pefin_refin', _pefin || 'Sem ocorrências')}</span>
               </div>
-              <div class="restricao-item ${_dividaPos ? 'danger' : 'ok'}">
+              <div class="restricao-item">
                 <span>Dívida Ativa</span><span style="font-weight:600;">${renderField('tributario.divida_ativa', _dividaAt, { tipo: 'number', format: v => v > 0 ? formatCurrencyFull(v) : 'Sem ocorrências' })}</span>
               </div>
-              <div class="restricao-item ${_parcSim ? 'alert' : 'ok'}">
+              <div class="restricao-item">
                 <span>Parcelamentos (PERT / REFIS)</span><span style="font-weight:600;">${renderField('tributario.parcelamentos_status', _parcStat)}</span>
               </div>
-              <div class="restricao-item ${_chequesPos ? 'danger' : 'ok'}">
+              <div class="restricao-item">
                 <span>Cheques sem Fundo (CCF)</span><span style="font-weight:600;">${renderField('tributario.cheques_sem_fundo', _cheques, { tipo: 'number', format: v => v > 0 ? v + ' ocorrência(s)' : 'Sem ocorrências' })}</span>
               </div>
             </div>
@@ -4386,21 +4808,42 @@ body.edit-mode #topbar {
                     };
 
                     html = `
-          <div style="background:var(--bg);border-radius:6px;padding:8px 14px;margin-bottom:16px;font-size:12px;color:var(--secondary);">
-            ℹ️ Os arquivos desta aba são registros da visita e <b>não são submetidos à análise da IA</b>.
-          </div>
-          <div class="section-block">
-            <h3>🎙️ Áudios da Visita</h3>
-            ${audios.length ? audios.map(renderAudioItem).join('') : '<div style="font-size:13px;color:var(--secondary);">Nenhum áudio enviado.</div>'}
-          </div>
-          <div class="section-block">
-            <h3>🎬 Vídeos da Visita</h3>
-            ${videos.length ? videos.map(renderVideoItem).join('') : '<div style="font-size:13px;color:var(--secondary);">Nenhum vídeo enviado.</div>'}
-          </div>
-          <div class="section-block">
-            <h3>📄 Documentos da Visita</h3>
-            ${docs.length ? `<div style="display:flex;flex-direction:column;gap:6px;">${docs.map(renderDocItem).join('')}</div>` : '<div style="font-size:13px;color:var(--secondary);">Nenhum documento enviado.</div>'}
-          </div>`;
+  <div style="background:var(--bg);border-radius:6px;padding:8px 14px;margin-bottom:16px;font-size:12px;color:var(--secondary);">
+    ℹ️ Os arquivos desta aba são registros da visita e <b>não são submetidos à análise da IA</b>.
+  </div>
+  <div class="section-block">
+    <h3>🎙️ Áudios da Visita</h3>
+    ${audios.length ? audios.map(renderAudioItem).join('') : '<div style="font-size:13px;color:var(--secondary);">Nenhum áudio enviado.</div>'}
+    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+        + Adicionar áudio
+        <input type="file" multiple accept=".mp3,.m4a,.wav,.ogg,.aac" style="display:none;" onchange="adicionarAnexoPosAnalise('visita-audio', this)">
+      </label>
+      <span id="anexo-status-visita-audio" style="font-size:12px;color:var(--secondary);"></span>
+    </div>
+  </div>
+  <div class="section-block">
+    <h3>🎬 Vídeos da Visita</h3>
+    ${videos.length ? videos.map(renderVideoItem).join('') : '<div style="font-size:13px;color:var(--secondary);">Nenhum vídeo enviado.</div>'}
+    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+        + Adicionar vídeo
+        <input type="file" multiple accept=".mp4,.mov,.avi,.mkv,.webm" style="display:none;" onchange="adicionarAnexoPosAnalise('visita-video', this)">
+      </label>
+      <span id="anexo-status-visita-video" style="font-size:12px;color:var(--secondary);"></span>
+    </div>
+  </div>
+  <div class="section-block">
+    <h3>📄 Documentos da Visita</h3>
+    ${docs.length ? `<div style="display:flex;flex-direction:column;gap:6px;">${docs.map(renderDocItem).join('')}</div>` : '<div style="font-size:13px;color:var(--secondary);">Nenhum documento enviado.</div>'}
+    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+        + Adicionar documento
+        <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx,.csv" style="display:none;" onchange="adicionarAnexoPosAnalise('visita-doc', this)">
+      </label>
+      <span id="anexo-status-visita-doc" style="font-size:12px;color:var(--secondary);"></span>
+    </div>
+  </div>`;
                     break;
                 }
 
@@ -4620,6 +5063,23 @@ body.edit-mode #topbar {
                             document.getElementById('pa-nome-analista').value = av.nome_analista || '';
                             document.getElementById('pa-notas-finais').value = av.notas_finais || '';
                             renderPaLists(rd.analysis_id);
+                            renderPaListsView(rd.analysis_id);
+
+                            // bloquear campos si el estado no permite edición
+                            const statusAtual = allAnalyses.find(a => a.id === rd.analysis_id)?.status || 'done';
+                            const bloqueado = statusAtual !== 'done';
+                            ['pa-parecer', 'pa-limite', 'pa-limite-mem', 'pa-nome-analista', 'pa-notas-finais'].forEach(id => {
+                                const el = document.getElementById(id);
+                                if (!el) return;
+                                el.disabled = bloqueado;
+                                el.style.opacity = bloqueado ? '0.6' : '1';
+                                el.style.background = bloqueado ? 'var(--bg)' : '';
+                                el.style.cursor = bloqueado ? 'not-allowed' : '';
+                            });
+                            const btnSalvar = document.getElementById('btn-salvar-parecer');
+                            const btnSubmeter = document.getElementById('btn-submeter-comite');
+                            if (btnSalvar) btnSalvar.style.display = bloqueado ? 'none' : 'inline-flex';
+                            if (btnSubmeter) btnSubmeter.style.display = bloqueado ? 'none' : 'inline-flex';
                         }
                     });
                     const aid = rd.analysis_id;
@@ -4669,12 +5129,14 @@ body.edit-mode #topbar {
             </div>
           </div>
 
-          <div style="display:flex;gap:12px;align-items:center;">
+            <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
             <button class="btn btn-primary" onclick="salvarParecerAnalista('${aid}')">💾 Salvar avaliação</button>
+                          <button class="btn btn-primary" onclick="submeterComite('${aid}')">Submeter comitê</button>
+              <button class="btn btn-secondary" onclick="exportarPDF()">↓ Exportar PDF</button>
             <div id="pa-save-msg" style="font-size:12px;color:var(--accent);"></div>
           </div>
 
-          <div class="section-block" style="margin-top:20px;">
+          <div class="section-block" style="margin-top:20px; display:none;">
             <h3>Validação e submissão</h3>
             <div class="form-group">
               <label>Nome do analista responsável</label>
@@ -4683,11 +5145,6 @@ body.edit-mode #topbar {
             <div class="form-group">
               <label>Notas finais</label>
               <textarea id="pa-notas-finais" rows="3" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:Arial;resize:vertical;" placeholder="Notas finais...">${avSaved.notas_finais || ''}</textarea>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
-              <button class="btn btn-primary" onclick="validarAssinarAnalise('${aid}')">✅ Validar e assinar</button>
-              <button class="btn btn-secondary" onclick="submeterComite('${aid}')">Submeter comitê</button>
-              <button class="btn btn-secondary" onclick="exportarPDF()">↓ Exportar PDF</button>
             </div>
           </div>`;
                     break;
@@ -4715,7 +5172,7 @@ body.edit-mode #topbar {
                 }
             }
 
-            html += `<div class="obs-analista">
+            html += `<div class="obs-analista" style="display: none;">
         <label>Observações do Analista (${ABAS_ANALISTA.find(a => a.id === abaId)?.label || abaId})</label>
         <textarea id="obs-${abaId}" onchange="salvarObsAba('${abaId}','${rd.analysis_id}')" placeholder="Registre suas observações..."></textarea>
         <button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="salvarObsAba('${abaId}','${rd.analysis_id}')">💾 Salvar</button>
@@ -4740,6 +5197,7 @@ body.edit-mode #topbar {
             document.getElementById('apane-' + id)?.classList.add('on');
             if (id === 'parecer-analista' && reportData) {
                 renderPaLists(reportData.analysis_id);
+                renderPaListsView(reportData.analysis_id);
             }
             // re-popular abas de arquivos ao abrir (pega uploads feitos na sessão)
             if ((id === 'visita' || id === 'anexos') && reportData) {
@@ -4757,7 +5215,13 @@ body.edit-mode #topbar {
             const files = inputEl.files;
             if (!files || files.length === 0) return;
 
-            const fieldLabel = fieldKey === 'visita-fotos' ? 'Fotos da Visita' : 'Outros Anexos';
+            const fieldLabel = {
+                'visita-fotos': 'Fotos da Visita',
+                'visita-audio': 'Áudio da Visita',
+                'visita-video': 'Vídeo da Visita',
+                'visita-doc': 'Documento da Visita',
+                'anexos': 'Outros Anexos',
+            }[fieldKey] || fieldKey;
             const statusEl = document.getElementById('anexo-status-' + fieldKey);
             if (statusEl) statusEl.textContent = 'Enviando ' + files.length + ' arquivo(s)...';
 
@@ -4875,162 +5339,323 @@ body.edit-mode #topbar {
 
             // resumo empresa
             document.getElementById('comite-resumo').innerHTML = `
-        <div style="font-size:13px;display:flex;flex-direction:column;gap:8px;">
-          <div><b>Empresa:</b> ${e.nome || '—'}</div>
-          <div><b>CNPJ:</b> ${e.cnpj || '—'}</div>
-          <div><b>Score Vibra:</b> <span style="color:${scoreColor(scores.vibra_composto)};font-weight:800;font-family:'Nunito',Arial,sans-serif;font-size:18px;">${formatScoreDisplay(scores.vibra_composto)}</span> &nbsp;<span class="score-badge ${getScoreClass(scores.vibra_composto || 0)}">Classe ${getScoreClass(scores.vibra_composto || 0)}</span></div>
-          <div><b>Limite Recomendado (IA):</b> <span style="color:var(--accent);font-weight:700;">${formatCurrency(rd.limite?.recomendado)}</span></div>
-          <div><b>Regime Tributário:</b> ${e.regime_tributario || '—'}</div>
-          <div><b>Porte:</b> ${e.porte || '—'}</div>
+        <div style="font-size:13px;display:flex;justify-content: space-between; align-items: flex-end;">
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:8px;">
+              <div><b>Empresa:</b> ${e.nome || '—'}</div>
+              <div><b>CNPJ:</b> ${e.cnpj || '—'}</div>
+            </div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:8px;">
+              <div><b>Regime Tributário:</b> ${e.regime_tributario || '—'}</div>
+              <div><b>Porte:</b> ${e.porte || '—'}</div>
+            </div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:8px;">
+              <div><b>Score Vibra:</b> <span style="color:${scoreColor(scores.vibra_composto)};font-weight:800;font-family:'Nunito',Arial,sans-serif;font-size:18px;">${formatScoreDisplay(scores.vibra_composto)}</span> &nbsp;<span class="score-badge ${getScoreClass(scores.vibra_composto || 0)}">Classe ${getScoreClass(scores.vibra_composto || 0)}</span></div>
+              <div><b>Limite Recomendado (IA):</b> <span style="color:var(--accent);font-weight:700;">${formatCurrency(rd.limite?.recomendado)}</span></div>
+            </div>
         </div>`;
 
-            // parecer do analista — exibição completa e estruturada
+            // parecer do analista — todos os analistas
             try {
-                const av = _avCache[aid] || await getAvAnalista(aid);
-                const pf = av.pontos_fortes || [];
-                const pa = av.pontos_atencao || [];
-                const cond = av.condicionantes || [];
+                const arr = _avCacheAll[aid] || [];
+
+                const renderItemList = (items) => {
+                    if (!items || !items.length) return '';
+                    return items.map(item =>
+                        `<div style="display:flex;gap:6px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);">› ${item}</div>`
+                    ).join('');
+                };
 
                 let html = '';
-
-                if (av.parecer) {
-                    html += `<div style="font-size:13px;line-height:1.7;color:var(--text);margin-bottom:14px;padding:12px 16px;background:var(--bg);border-radius:6px;border-left:3px solid var(--primary);">${av.parecer}</div>`;
+                if (!arr.length) {
+                    html = '<div style="font-size:13px;color:var(--secondary);font-style:italic;">Nenhum parecer registrado pelo analista.</div>';
                 } else {
-                    html += `<div style="font-size:13px;color:var(--secondary);font-style:italic;margin-bottom:14px;">Nenhum parecer registrado pelo analista.</div>`;
+                    html = arr.map(p => `
+                    <div class="section-block" style="margin-bottom:16px;">
+                        <h3>Avaliação — ${p.nome || p.email} ${p.cargo ? `<span style="font-size:12px;font-weight:400;color:var(--secondary);">(${p.cargo})</span>` : ''} ${p.ts ? `<span style="font-size:11px;font-weight:400;color:var(--secondary);margin-left:8px;">· ${new Date(p.ts).toLocaleDateString('pt-BR')}</span>` : ''}</h3>
+                        <div class="analista-eval">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                                <div class="form-group">
+                                    <h3>🔥 Limite recomendado pelo analista</h3>
+                                    <h4 style="font-size:22px;font-weight:800;color:var(--primary);margin:4px 0 8px;">
+                                        ${p.limite ? formatCurrency(parseFloat(p.limite)) : 'R$ —'}
+                                    </h4>
+                                    <div style="margin-top:20px;">
+                                        <h3>✅ Pontos fortes identificados pelo analista</h3>
+                                        <div style="margin-bottom:10px;display:flex;flex-direction:column;gap:6px;">
+                                            ${renderItemList(p.pontos_fortes)}
+                                        </div>
+                                        <h3>⚠️ Pontos de atenção identificados pelo analista</h3>
+                                        <div style="margin-bottom:10px;display:flex;flex-direction:column;gap:6px;">
+                                            ${renderItemList(p.pontos_atencao)}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <h3>📋 Condicionantes do analista</h3>
+                                    <div style="margin-bottom:10px;display:flex;flex-direction:column;gap:6px;">
+                                        ${renderItemList(p.condicionantes)}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Parecer do Analista</label>
+                                <div style="font-size:14px;color:var(--primary);margin:4px 0 8px;padding:10px;background-color:#fff;border-radius:5px;">
+                                    ${p.parecer || '—'}
+                                </div>
+                            </div>
+                            ${p.notas_finais ? `<div style="font-size:12px;color:var(--secondary);margin-top:6px;">📌 ${p.notas_finais}</div>` : ''}
+                        </div>
+                    </div>`).join('');
                 }
 
-                if (av.limite) {
-                    html += `<div style="margin-bottom:10px;"><span style="font-size:11px;font-weight:700;color:var(--secondary);text-transform:uppercase;">Limite recomendado pelo analista</span><br>
-            <span style="font-family:'Nunito',Arial,sans-serif;font-size:20px;font-weight:900;color:var(--accent);">${av.limite}</span>
-            ${av.limite_mem ? `<span style="font-size:11px;color:var(--secondary);margin-left:10px;">${av.limite_mem}</span>` : ''}
-          </div>`;
-                }
-
-                if (pf.length) {
-                    html += `<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:6px;">Pontos Fortes</div>
-            ${pf.map(p => `<div style="display:flex;gap:6px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);">✅ ${p}</div>`).join('')}</div>`;
-                }
-
-                if (pa.length) {
-                    html += `<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;margin-bottom:6px;">Pontos de Atenção</div>
-            ${pa.map(p => `<div style="display:flex;gap:6px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);">⚠️ ${p}</div>`).join('')}</div>`;
-                }
-
-                if (cond.length) {
-                    html += `<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:6px;">Condicionantes</div>
-            ${cond.map((c, i) => `<div style="display:flex;gap:6px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);"><b style="color:var(--primary);">${i + 1}.</b> ${c}</div>`).join('')}</div>`;
-                }
-
-                if (av.nome_analista) {
-                    html += `<div style="margin-top:10px;font-size:11px;color:var(--secondary);">Analista responsável: <b style="color:var(--primary);">${av.nome_analista}</b></div>`;
-                }
-
-                document.getElementById('comite-parecer-analista').innerHTML = html || '<div style="font-size:13px;color:var(--secondary);">Parecer do analista não registrado.</div>';
+                document.getElementById('comite-parecer-analista').innerHTML = html;
             } catch (err) {
                 document.getElementById('comite-parecer-analista').textContent = rd.parecer || '—';
             }
 
-            renderComiteState(aid);
+            await renderComiteState(aid);
         }
 
-        function renderComiteState(aid) {
-            const cd = getComiteData(aid) || { votos: [], decisao: null };
-            const decisionada = !!cd.decisao;
+              async function renderComiteState(aid) {
+                  const cd = await getComiteData(aid) || { votos: [], decisao: null };
+                  const decisionada = !!cd.decisao;
+                  const statusActual = allAnalyses.find(a => a.id === aid)?.status
+                      || reportData?.status
+                      || 'done';
+                  const puedeDevolver = currentUser && ['superadmin', 'admin', 'gerente'].includes(currentUser.perfil);
+                  const sinDecision = ['aguardando_comite', 'em_deliberacao'].includes(statusActual);
+                  const votacionAbierta = sinDecision && !decisionada;
 
-            // status banner
-            const statusArea = document.getElementById('comite-status-area');
-            if (cd.decisao) {
-                const st = cd.decisao.status;
-                statusArea.innerHTML = `<div class="comite-status-banner ${st.includes('Aprovado') ? 'aprovado' : st === 'Recusado' ? 'recusado' : 'pendente'}">${st}</div>`;
-            } else {
-                statusArea.innerHTML = `<div class="comite-status-banner pendente">Aguardando deliberação</div>`;
-            }
+                  // ── STATUS BANNER + DETALLES DECISIÓN ─────────────────────
+                  const statusArea = document.getElementById('comite-status-area');
+                  if (cd.decisao) {
+                      const d = cd.decisao;
+                      const st = d.status;
+                      const cor = st.includes('Aprovado') ? 'aprovado' : st === 'Recusado' ? 'recusado' : 'pendente';
+                      statusArea.innerHTML = `
+            <div class="comite-status-banner ${cor}">${st}</div>
+            <div class="section-block" style="margin-top:14px;">
+                <h3>📋 Detalhes da Decisão</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:13px;margin-bottom:12px;">
+                    ${d.limite ? `<div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Limite Aprovado</div>
+                        <div style="font-size:16px;font-weight:800;color:var(--accent);">${formatCurrency(parseFloat(d.limite))}</div></div>` : ''}
+                    ${d.prazo ? `<div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Prazo</div>
+                        <div style="font-weight:600;">${d.prazo}</div></div>` : ''}
+                    ${d.validade ? `<div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Validade</div>
+                        <div style="font-weight:600;">${d.validade}</div></div>` : ''}
+                    ${d.taxa ? `<div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Taxa</div>
+                        <div style="font-weight:600;">${d.taxa}</div></div>` : ''}
+                    ${d.garantias ? `<div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Garantias</div>
+                        <div style="font-weight:600;">${d.garantias}</div></div>` : ''}
+                    <div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Registrado por</div>
+                        <div style="font-weight:600;">${d.registrado_por || '—'} · ${d.data || ''}</div></div>
+                </div>
+                ${d.obs ? `<div style="font-size:13px;color:var(--text);padding:10px 14px;background:var(--bg);border-radius:6px;border-left:3px solid var(--primary);">${d.obs}</div>` : ''}
+            </div>`;
+                  } else {
+                      const STATUS_LABELS = {
+                          'aguardando_comite': '📨 Aguardando votação do comitê',
+                          'em_deliberacao': '⏳ Em deliberação',
+                          'done': '✍️ Aguardando parecer do analista',
+                      };
+                      statusArea.innerHTML = `<div class="comite-status-banner pendente">${STATUS_LABELS[statusActual] || 'Aguardando deliberação'}</div>`;
+                  }
 
-            // votos bloqueados se decisão
-            const votoBlock = document.getElementById('comite-voto-block');
-            if (decisionada) {
-                votoBlock.innerHTML = '<div style="font-size:13px;color:var(--secondary);">Deliberação encerrada. Votos bloqueados.</div>';
-            } else {
-                // verificar se user já votou
-                const meuVoto = cd.votos.find(v => v.usuario === currentUser?.usuario);
-                if (meuVoto) {
-                    votoBlock.innerHTML = `<div style="font-size:13px;">Seu voto: <b>${meuVoto.voto}</b> — registrado.</div>`;
-                }
-            }
+                  // ── BLOCO DE VOTAÇÃO ───────────────────────────────────────
+                  const votoBlock = document.getElementById('comite-voto-block');
+                  if (decisionada) {
+                      votoBlock.innerHTML = '<div style="font-size:13px;color:var(--secondary);">Deliberação encerrada. Votos bloqueados.</div>';
+                  } else if (!votacionAbierta) {
+                      votoBlock.innerHTML = '<div style="font-size:13px;color:var(--secondary);font-style:italic;">A votação será liberada após o envio ao comitê pelo analista.</div>';
+                  } else {
+                      const meuVoto = cd.votos.find(v => v.usuario === currentUser?.usuario || v.usuario === currentUser?.email);
+                      votoBlock.innerHTML = `
+            ${meuVoto ? `<div style="font-size:13px;margin-bottom:12px;">
+                Seu voto atual: <b style="color:${meuVoto.voto === 'Favorável' ? 'var(--accent)' : meuVoto.voto === 'Contrário' ? 'var(--danger)' : meuVoto.voto === 'Abstenção' ? 'var(--secondary)' : 'var(--warn)'};">${meuVoto.voto}</b>
+                ${meuVoto.obs ? `<span style="font-size:12px;color:var(--secondary);margin-left:8px;">· ${meuVoto.obs}</span>` : ''}
+            </div>
+            <div style="font-size:12px;color:var(--secondary);margin-bottom:10px;">Deseja alterar seu voto?</div>` : ''}
+            <div class="comite-votes" id="comite-vote-opts">
+                <div class="vote-opt ${meuVoto?.voto === 'Favorável' ? 'selected-fav' : ''}" onclick="registrarVoto('Favorável')">✅ Favorável</div>
+                <div class="vote-opt ${meuVoto?.voto === 'Com condicionantes' ? 'selected-cond' : ''}" onclick="registrarVoto('Com condicionantes')">⚠️ Com Condicionantes</div>
+                <div class="vote-opt ${meuVoto?.voto === 'Contrário' ? 'selected-cont' : ''}" onclick="registrarVoto('Contrário')">❌ Contrário</div>
+                <div class="vote-opt ${meuVoto?.voto === 'Abstenção' ? 'selected-abs' : ''}" onclick="registrarVoto('Abstenção')">🤐 Abstenção</div>
+            </div>
+            <div class="form-group" style="margin-top:12px;">
+                <label>Observação do voto (opcional)</label>
+                <textarea id="voto-obs" rows="2" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:Arial;">${meuVoto?.obs || ''}</textarea>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="confirmarVoto()">${meuVoto ? 'Atualizar Voto' : 'Confirmar Voto'}</button>`;
+                      if (meuVoto) currentComiteVoto = meuVoto.voto;
+                  }
 
-            // placar
-            const placarEl = document.getElementById('placar-row');
-            const votosListEl = document.getElementById('votos-list');
-            const counts = { Favorável: 0, 'Com condicionantes': 0, Contrário: 0, Abstenção: 0 };
-            (cd.votos || []).forEach(v => { if (counts[v.voto] !== undefined) counts[v.voto]++; });
-            placarEl.innerHTML = Object.entries(counts).map(([k, v]) => `
-        <div class="placar-item"><div class="placar-num" style="color:${k === 'Favorável' ? 'var(--accent)' : k === 'Contrário' ? 'var(--danger)' : k === 'Abstenção' ? 'var(--secondary)' : 'var(--warn)'};">${v}</div><div class="placar-label">${k}</div></div>
-      `).join('');
-            votosListEl.innerHTML = (cd.votos || []).map(v => `<div class="voto-item">
-        <span class="voto-item .vn">${v.nome || v.usuario}</span>
-        <span class="vcargo">${v.cargo || ''}</span>
-        <span class="valcada">${v.alcada || 'Deliberação'}</span>
-        <span class="tag ${v.voto === 'Favorável' ? 'green' : v.voto === 'Contrário' ? 'red' : v.voto === 'Abstenção' ? 'gray' : 'yellow'}">${v.voto}</span>
-        ${v.obs ? `<span style="font-size:11px;color:var(--secondary);">${v.obs}</span>` : ''}
-      </div>`).join('') || '<div style="font-size:13px;color:var(--secondary);">Nenhum voto registrado ainda.</div>';
+                  // ── PLACAR ─────────────────────────────────────────────────
+                  const placarEl = document.getElementById('placar-row');
+                  const votosListEl = document.getElementById('votos-list');
+                  const counts = { 'Favorável': 0, 'Com condicionantes': 0, 'Contrário': 0, 'Abstenção': 0 };
+                  (cd.votos || []).forEach(v => { if (counts[v.voto] !== undefined) counts[v.voto]++; });
+                  placarEl.innerHTML = Object.entries(counts).map(([k, v]) => `
+        <div class="placar-item">
+            <div class="placar-num" style="color:${k === 'Favorável' ? 'var(--accent)' : k === 'Contrário' ? 'var(--danger)' : k === 'Abstenção' ? 'var(--secondary)' : 'var(--warn)'};">${v}</div>
+            <div class="placar-label">${k}</div>
+        </div>`).join('');
+                  votosListEl.innerHTML = (cd.votos || []).map(v => `
+        <div class="voto-item">
+            <span class="voto-item .vn">${v.nome || v.usuario}</span>
+            <span class="vcargo">${v.cargo || ''}</span>
+            <span class="valcada">${v.alcada || 'Deliberação'}</span>
+            <span class="tag ${v.voto === 'Favorável' ? 'green' : v.voto === 'Contrário' ? 'red' : v.voto === 'Abstenção' ? 'gray' : 'yellow'}">${v.voto}</span>
+            ${v.obs ? `<span style="font-size:11px;color:var(--secondary);">${v.obs}</span>` : ''}
+        </div>`).join('') || '<div style="font-size:13px;color:var(--secondary);">Nenhum voto registrado ainda.</div>';
 
-            // bloquear form decisão se já registrado
-            if (decisionada) {
-                const df = document.getElementById('decisao-form-area');
-                const btn = document.getElementById('btn-registrar-decisao');
-                if (df) df.style.opacity = '0.5';
-                if (btn) { btn.disabled = true; btn.textContent = 'Decisão já registrada'; }
-            }
-        }
+                  // ── FORM DE DECISÃO ────────────────────────────────────────
+                  const db = document.getElementById('decisao-block');
+                  const df = document.getElementById('decisao-form-area');
+                  const btn = document.getElementById('btn-registrar-decisao');
+                  const btnDevolver = document.getElementById('btn-devolver-revisao');
+                  const esAnalista = currentUser?.perfil === 'analista';
+                  const puedeRegistrar = ['superadmin', 'admin', 'gerente'].includes(currentUser?.perfil || '');
 
-        function registrarVoto(tipo) {
+                  if (decisionada || esAnalista) {
+                      // decisão registrada OU perfil analista — esconder tudo
+                      if (db) db.style.display = 'none';
+                      if (btn) btn.style.display = 'none';
+                      if (btnDevolver) btnDevolver.style.display = 'none';
+                  } else if (votacionAbierta && puedeRegistrar) {
+                      if (db) db.style.display = 'block';
+                      if (df) df.style.display = 'grid';
+                      if (btn) { btn.style.display = 'inline-flex'; btn.disabled = false; btn.textContent = 'Registrar Decisão Final'; }
+                      if (btnDevolver) btnDevolver.style.display = 'inline-flex';
+
+                      // poblar tags de socios
+                      const qsa = reportData?.qsa || reportData?.raw?.qsa || [];
+                      const tagsExistentes = cd.tags_qsa || {};
+
+                      // inicializar cache de custom tags
+                      _customTagsCache = {};
+                      qsa.forEach(q => {
+                          const tags = tagsExistentes[q.nome] || [];
+                          _customTagsCache[q.nome] = tags.filter(t => t !== 'Assina pela empresa' && t !== 'É avalista');
+                      });
+
+                      const tagsContainer = document.getElementById('decisao-qsa-tags-list');
+                      if (tagsContainer && qsa.length) {
+                          tagsContainer.innerHTML = qsa.map((q, i) => {
+                              const tags = tagsExistentes[q.nome] || [];
+                              const customTags = _customTagsCache[q.nome] || [];
+                              return `
+            <div style="background:var(--bg);border-radius:6px;padding:10px 12px;">
+                <div style="font-weight:700;font-size:13px;margin-bottom:8px;">
+                    ${q.nome} <span style="font-size:11px;color:var(--secondary);font-weight:400;">${q.cargo || ''} · ${q.participacao_pct != null ? q.participacao_pct + '%' : ''}</span>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px; margin-top:15px;">
+                    <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer; white-space:nowrap;">
+                        <input type="checkbox" data-socio="${q.nome}" data-tag="Assina pela empresa" ${tags.includes('Assina pela empresa') ? 'checked' : ''}>
+                        Assina pela empresa
+                    </label>
+                    <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer; white-space:nowrap;">
+                        <input type="checkbox" data-socio="${q.nome}" data-tag="É avalista" ${tags.includes('É avalista') ? 'checked' : ''}>
+                        É avalista
+                    </label>
+                </div>
+                <div id="custom-tags-${i}" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
+                    ${customTags.map((t, ti) => `
+                        <span style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--primary);color:#fff;">
+                            ${t}
+                            <button onclick="removerCustomTag(${i},'${q.nome}',${ti})" style="background:none;border:none;color:#fff;cursor:pointer;font-size:12px;padding:0;line-height:1;">✕</button>
+                        </span>`).join('')}
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <input type="text" id="custom-tag-input-${i}" placeholder="Outro tag..."
+                        style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;flex:1;"
+                        onkeydown="if(event.key==='Enter'){adicionarCustomTag(${i},'${q.nome}');event.preventDefault();}">
+                    <button class="btn btn-secondary btn-sm" onclick="adicionarCustomTag(${i},'${q.nome}')">+ Adicionar</button>
+                </div>
+            </div>`;
+                          }).join('');
+                      }
+                  } else if (votacionAbierta && !puedeRegistrar) {
+                      // votação aberta mas não pode registrar (comite sem alçada)
+                      if (db) db.style.display = 'none';
+                      if (btnDevolver) btnDevolver.style.display = 'none';
+                  } else {
+                      // aguardando analista — esconder tudo
+                      if (db) db.style.display = 'none';
+                      if (btn) btn.style.display = 'none';
+                      if (btnDevolver) btnDevolver.style.display = 'none';
+                  }
+              }
+
+              async function registrarVoto(tipo) {
+                  if (!reportData) return;
+                  currentComiteVoto = tipo;
+                  // actualizar visual — buscar por clase en lugar de ID
+                  document.querySelectorAll('#comite-vote-opts .vote-opt').forEach(el => {
+                      el.classList.remove('selected-fav', 'selected-cond', 'selected-cont', 'selected-abs');
+                  });
+                  const clsMap = {
+                      'Favorável': 'selected-fav',
+                      'Com condicionantes': 'selected-cond',
+                      'Contrário': 'selected-cont',
+                      'Abstenção': 'selected-abs',
+                  };
+                  // marcar el seleccionado por texto
+                  document.querySelectorAll('#comite-vote-opts .vote-opt').forEach(el => {
+                      const textos = {
+                          'Favorável': 'Favorável',
+                          'Com condicionantes': 'Condicionantes',
+                          'Contrário': 'Contrário',
+                          'Abstenção': 'Abstenção',
+                      };
+                      if (el.textContent.includes(textos[tipo])) {
+                          el.classList.add(clsMap[tipo]);
+                      }
+                  });
+              }
+
+              async function confirmarVoto() {
+                  if (!currentComiteVoto) { showToast('Selecione uma opção de voto.', 'error'); return; }
+                  if (!reportData || !currentUser) return;
+                  const aid = reportData.analysis_id;
+                  const cd = await getComiteData(aid) || { votos: [], decisao: null };
+                  if (cd.decisao) { showToast('Deliberação encerrada.', 'info'); return; }
+                  const obsVoto = document.getElementById('voto-obs')?.value || '';
+                  cd.votos = cd.votos.filter(v => v.usuario !== currentUser.usuario && v.usuario !== currentUser.email);
+                  cd.votos.push({
+                      usuario: currentUser.email || currentUser.usuario,
+                      nome: currentUser.nome,
+                      cargo: currentUser.cargo,
+                      perfil: currentUser.perfil,
+                      alcada: 'Deliberação',
+                      voto: currentComiteVoto,
+                      obs: obsVoto,
+                      ts: Date.now(),
+                  });
+                  await saveComiteData(aid, cd);
+                  try {
+                      await fetch(API + '/analysis/' + aid + '/status', {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: 'em_deliberacao' })
+                      });
+                      // actualizar cache local inmediatamente
+                      const idx = allAnalyses.findIndex(a => a.id === aid);
+                      if (idx >= 0) allAnalyses[idx].status = 'em_deliberacao';
+                      if (reportData) reportData.status = 'em_deliberacao';
+                  } catch (e) { }
+                  currentComiteVoto = null;
+                  document.getElementById('voto-obs').value = '';
+                  await renderComiteState(aid);
+                  showToast('Voto registrado com sucesso.', 'success');
+              }
+
+        async function registrarDecisao() {
             if (!reportData) return;
-            const mapa = {
-                'Favorável': ['vote-fav', 'selected-fav'],
-                'Com condicionantes': ['vote-cond', 'selected-cond'],
-                'Contrário': ['vote-cont', 'selected-cont'],
-                'Abstenção': ['vote-abs', 'selected-abs'],
-            };
-            Object.values(mapa).forEach(([id, cls]) => {
-                document.getElementById(id)?.classList.remove(cls);
-            });
-            const [id, cls] = mapa[tipo] || [];
-            if (id) document.getElementById(id)?.classList.add(cls);
-            currentComiteVoto = tipo;
-        }
-
-        function confirmarVoto() {
-            if (!currentComiteVoto) { showToast('Selecione uma opção de voto.', 'error'); return; }
-            if (!reportData || !currentUser) return;
-            const aid = reportData.analysis_id;
-            const cd = getComiteData(aid) || { votos: [], decisao: null };
-            if (cd.decisao) { showToast('Deliberação encerrada.', 'info'); return; }
-            const obsVoto = document.getElementById('voto-obs')?.value || '';
-            // remover voto anterior do mesmo usuário
-            cd.votos = cd.votos.filter(v => v.usuario !== currentUser.usuario);
-            cd.votos.push({
-                usuario: currentUser.usuario,
-                nome: currentUser.nome,
-                cargo: currentUser.cargo,
-                perfil: currentUser.perfil,
-                alcada: ['gerente', 'admin'].includes(currentUser.perfil) ? 'Deliberação' : 'Deliberação',
-                voto: currentComiteVoto,
-                obs: obsVoto,
-                ts: Date.now(),
-            });
-            saveComiteData(aid, cd);
-            currentComiteVoto = null;
-            document.getElementById('voto-obs').value = '';
-            renderComiteState(aid);
-            showToast('Voto registrado com sucesso.', 'success');
-        }
-
-        function registrarDecisao() {
-            if (!reportData) return;
-            const canDecide = currentUser && ['gerente', 'admin'].includes(currentUser.perfil);
+            const canDecide = currentUser && ['gerente', 'admin', 'superadmin'].includes(currentUser.perfil);
             if (!canDecide) { showToast('Apenas gerentes e admins podem registrar a decisão.', 'error'); return; }
             const aid = reportData.analysis_id;
-            const cd = getComiteData(aid) || { votos: [], decisao: null };
+            const cd = await getComiteData(aid) || { votos: [], decisao: null };
             const status = document.getElementById('decisao-status').value;
             cd.decisao = {
                 status,
@@ -5042,54 +5667,133 @@ body.edit-mode #topbar {
                 obs: document.getElementById('decisao-obs').value,
                 registrado_por: currentUser.nome,
                 data: new Date().toLocaleDateString('pt-BR'),
+                ts: Date.now(),
             };
-            saveComiteData(aid, cd);
-            atualizarStatusComite(aid, status);
-            renderComiteState(aid);
-            populateBasico(reportData); // atualizar seção comitê no básico
+            // leer tags de socios
+            const tagsQsa = {};
+            document.querySelectorAll('#decisao-qsa-tags-list [data-socio][type="checkbox"]').forEach(el => {
+                const socio = el.getAttribute('data-socio');
+                if (!tagsQsa[socio]) tagsQsa[socio] = [];
+                if (el.checked) tagsQsa[socio].push(el.getAttribute('data-tag'));
+            });
+            Object.entries(_customTagsCache).forEach(([socio, tags]) => {
+                if (!tagsQsa[socio]) tagsQsa[socio] = [];
+                tagsQsa[socio].push(...tags);
+            });
+            cd.tags_qsa = tagsQsa;
+            await saveComiteData(aid, cd);
+            // después de saveComiteData
+            const statusFinal = status.includes('Aprovado') ?
+                (status.includes('ressalvas') ? 'aprovado_com_ressalvas' : 'aprovado') :
+                'recusado';
+            await fetch(API + '/analysis/' + aid + '/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: statusFinal })
+            });
+            const idx = allAnalyses.findIndex(a => a.id === aid);
+            if (idx >= 0) allAnalyses[idx].status = statusFinal;
+            if (reportData) reportData.status = statusFinal;
+            await atualizarStatusComite(aid, status);
+            await renderComiteState(aid);
+            await populateBasico(reportData);
             showToast('Decisão registrada com sucesso.', 'success');
         }
 
         /* ===== PARECER ANALISTA — itens dinâmicos ===== */
         let _avCache = {}; // cache en memoria para la sesión
+        let _avCacheAll = {};
 
         async function getAvAnalista(aid) {
             if (_avCache[aid]) return _avCache[aid];
             try {
                 const r = await fetch(API + '/analysis/' + aid + '/parecer');
                 if (r.ok) {
-                    _avCache[aid] = await r.json();
+                    const arr = await r.json();
+                    // buscar parecer del usuario actual
+                    const meu = arr.find(p => p.email === currentUser?.email || p.user_id === currentUser?.email);
+                    _avCache[aid] = meu || {};
+                    // guardar array completo para el ejecutivo
+                    _avCacheAll[aid] = arr;
                     return _avCache[aid];
                 }
             } catch (e) { }
             return {};
         }
 
-        async function _saveAvAnalista(aid, av) {
-            _avCache[aid] = av;
-            try {
-                await fetch(API + '/analysis/' + aid + '/parecer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(av)
-                });
-            } catch (e) { }
-        }
+              async function _saveAvAnalista(aid, av) {
+                  _avCache[aid] = av;
+                  // actualizar _avCacheAll con el parecer del usuario actual
+                  const payload = {
+                      ...av,
+                      user_id: currentUser?.email || 'desconhecido',
+                      email: currentUser?.email || '',
+                      nome: currentUser?.nome || '',
+                      cargo: currentUser?.cargo || '',
+                  };
+                  // actualizar cache local inmediatamente
+                  if (!_avCacheAll[aid]) _avCacheAll[aid] = [];
+                  const idx = _avCacheAll[aid].findIndex(p => p.email === currentUser?.email);
+                  if (idx >= 0) {
+                      _avCacheAll[aid][idx] = { ..._avCacheAll[aid][idx], ...payload };
+                  } else {
+                      _avCacheAll[aid].push(payload);
+                  }
+                  try {
+                      await fetch(API + '/analysis/' + aid + '/parecer', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(payload)
+                      });
+                  } catch (e) { }
+              }
 
         async function renderPaLists(aid) {
+            const av = await getAvAnalista(aid);
+            const statusAtual = allAnalyses.find(a => a.id === aid)?.status || 'done';
+            const bloqueado = statusAtual !== 'done';
+
+            const renderList = (listId, items, tipo) => {
+                const el = document.getElementById(listId);
+                if (!el) return;
+                el.innerHTML = (items || []).map((item, i) => `
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;font-size:13px;">
+                    <span style="flex:1;">${item}</span>
+                    ${!bloqueado ? `<button onclick="paRemoveItem('${tipo}','${aid}',${i})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:14px;">✕</button>` : ''}
+                </div>`).join('');
+                };
+
+            renderList('pa-pontos-fortes-list', av.pontos_fortes, 'fortes');
+            renderList('pa-pontos-atencao-list', av.pontos_atencao, 'atencao');
+            renderList('pa-condicionantes-list', av.condicionantes, 'condicionantes');
+
+            // bloquear inputs y botones de agregar
+            ['pa-pf-input', 'pa-pa-input', 'pa-cond-input'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.disabled = bloqueado;
+                el.style.opacity = bloqueado ? '0.6' : '1';
+            });
+            document.querySelectorAll('[onclick*="paAddItem"]').forEach(btn => {
+                btn.disabled = bloqueado;
+                btn.style.opacity = bloqueado ? '0.4' : '1';
+                btn.style.pointerEvents = bloqueado ? 'none' : '';
+            });
+        }
+
+        async function renderPaListsView(aid) {
             const av = await getAvAnalista(aid);
             const renderList = (listId, items, tipo) => {
                 const el = document.getElementById(listId);
                 if (!el) return;
                 el.innerHTML = (items || []).map((item, i) => `
-      <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;font-size:13px;">
-        <span style="flex:1;">${item}</span>
-        <button onclick="paRemoveItem('${tipo}','${aid}',${i})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:14px;">✕</button>
-      </div>`).join('');
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;font-size:13px;">
+                    <span style="flex:1;">- ${item}</span>
+                  </div>`).join('');
             };
-            renderList('pa-pontos-fortes-list', av.pontos_fortes, 'fortes');
-            renderList('pa-pontos-atencao-list', av.pontos_atencao, 'atencao');
-            renderList('pa-condicionantes-list', av.condicionantes, 'condicionantes');
+            renderList('pa-pontos-fortes-list-view', av.pontos_fortes, 'fortes');
+            renderList('pa-pontos-atencao-list-view', av.pontos_atencao, 'atencao');
+            renderList('pa-condicionantes-list-view', av.condicionantes, 'condicionantes');
         }
 
         async function paAddItem(tipo, aid) {
@@ -5103,6 +5807,7 @@ body.edit-mode #topbar {
             await _saveAvAnalista(aid, av);
             el.value = '';
             renderPaLists(aid);
+            renderPaListsView(aid);
         }
 
         async function paRemoveItem(tipo, aid, idx) {
@@ -5111,6 +5816,7 @@ body.edit-mode #topbar {
             if (av[key]) av[key].splice(idx, 1);
             await _saveAvAnalista(aid, av);
             renderPaLists(aid);
+            renderPaListsView(aid);
         }
 
         async function salvarParecerAnalista(aid) {
@@ -5128,6 +5834,8 @@ body.edit-mode #topbar {
                 if (btn) { btn.querySelector('.semaforo').className = 'semaforo ' + (av.parecer ? 'green' : 'gray'); }
             }
             showToast('Avaliação do analista salva.', 'success');
+            if (reportData) await populateExecutivo(reportData);
+            if (reportData) await populateComite(reportData);
         }
 
         async function validarAssinarAnalise(aid) {
@@ -5135,11 +5843,46 @@ body.edit-mode #topbar {
             showToast('Análise validada e assinada com sucesso.', 'success');
         }
 
-        async function submeterComite(aid) {
-            await salvarParecerAnalista(aid);
-            if (reportData) await populateComite(reportData);
-            switchView('comite');
-            showToast('Análise submetida ao comitê.', 'info');
+              async function submeterComite(aid) {
+                  if (!confirm('Confirma o envio ao comitê? O parecer não poderá ser editado após o envio.')) return;
+                  await salvarParecerAnalista(aid);
+                  try {
+                      await fetch(API + '/analysis/' + aid + '/status', {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: 'aguardando_comite' })
+                      });
+                      const idx = allAnalyses.findIndex(a => a.id === aid);
+                      if (idx >= 0) allAnalyses[idx].status = 'aguardando_comite';
+                      if (reportData) reportData.status = 'aguardando_comite';
+                  } catch (e) { }
+                  atualizarBotaoEditMode();
+                  if (reportData) {
+                      await populateBasico(reportData);
+                      await populateComite(reportData);
+                  }
+                  switchView('comite');
+                  showToast('Análise submetida ao comitê. Edição bloqueada.', 'info');
+              }
+
+        async function devolverParaRevisao(aid) {
+            if (!confirm('Devolver análise para revisão do analista? Os votos serão preservados como historial.')) return;
+            try {
+                await fetch(API + '/analysis/' + aid + '/status', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'done' })
+                });
+                const idx = allAnalyses.findIndex(a => a.id === aid);
+                if (idx >= 0) allAnalyses[idx].status = 'done';
+                if (reportData) reportData.status = 'done';
+                atualizarBotaoEditMode();
+                await populateBasico(reportData);
+                await renderComiteState(aid);
+                showToast('Análise devolvida para revisão do analista.', 'info');
+            } catch (e) {
+                showToast('Erro ao devolver análise.', 'error');
+            }
         }
 
         function exportarPDF() {
@@ -5159,8 +5902,8 @@ body.edit-mode #topbar {
         let adminAuth = false;
         const ADMIN_TABS_POR_PERFIL = {
             superadmin: ['empresas', 'usuarios', 'documentos', 'defasagem', 'calibracao', 'config', 'qualidade'],
-            admin: ['usuarios', 'documentos', 'defasagem', 'qualidade'],
-            gestor: [],
+            admin: ['usuarios'],
+            gerente: [],
             analista: [],
             comite: [],
         };
@@ -5417,15 +6160,30 @@ body.edit-mode #topbar {
             document.getElementById('modal-usuario').style.display = 'none';
         }
 
-        function renderAdminDocs() {
-            const checklist = getDocChecklist();
+        async function renderAdminDocs() {
             const el = document.getElementById('admin-docs-list');
-            el.innerHTML = checklist.map((d, i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;margin-bottom:6px;font-size:13px;">
-        <span style="color:var(--secondary);">${i + 1}.</span>
-        <span style="flex:1;">${d.label}</span>
-        <span class="doc-tag ${d.required === 'hard' || d.required === 'obrigatorio' ? 'required' : 'optional'}">${d.required}</span>
-        <span style="font-size:11px;color:var(--secondary);">${d.formats}</span>
-      </div>`).join('');
+            el.innerHTML = '<div style="font-size:13px;color:var(--secondary);">Carregando...</div>';
+            try {
+                const r = await fetch(API + '/admin/doc-checklist');
+                if (!r.ok) throw new Error();
+                const docs = await r.json();
+                el.innerHTML = docs.map(d => `
+                <div class="user-card" style="align-items:center;">
+                    <div style="width:28px;height:28px;border-radius:6px;background:${d.required === 'hard' ? 'var(--danger)' : d.required === 'obrigatorio' ? 'var(--primary)' : 'var(--secondary)'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;">
+                        ${d.required === 'hard' ? 'H' : d.required === 'obrigatorio' ? 'O' : 'Op'}
+                    </div>
+                    <div class="uc-info">
+                        <div class="uc-name">${d.label}</div>
+                        <div class="uc-email">${d.field_key} · ${d.formats}</div>
+                    </div>
+                    <span class="uc-status ${d.ativo ? 'ativo' : 'inativo'}">${d.ativo ? 'Ativo' : 'Inativo'}</span>
+<button class="btn btn-secondary btn-sm" onclick="editarDoc(${d.id},'${d.field_key}','${d.label.replace(/'/g, "\\'")}','${d.required}','${d.formats}',${d.ativo},${d.ordem})">Editar</button>
+<button class="btn btn-secondary btn-sm" onclick="toggleDoc(${d.id},${d.ativo})">${d.ativo ? 'Desativar' : 'Ativar'}</button>
+${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deletarDoc(${d.id})">Remover</button>` : ''}
+                </div>`).join('') || '<div style="font-size:13px;color:var(--secondary);">Nenhum documento cadastrado.</div>';
+            } catch (e) {
+                el.innerHTML = '<div style="font-size:13px;color:var(--danger);">Erro ao carregar documentos.</div>';
+            }
         }
 
         const DEFASAGEM_DEFAULT = { bureau: 30, scr: 90, faturamento: 90, balanco: 365, dre: 365, endividamento: 90, irpf: 365, contrato: 730, certidoes: 90 };
@@ -5436,7 +6194,7 @@ body.edit-mode #topbar {
                 const r = await fetch(API + '/scoring/defasagem');
                 if (r.ok) saved = await r.json();
             } catch (e) { }
-            const checklist = getDocChecklist().slice(0, 9);
+            const checklist = await getDocChecklist().slice(0, 9);
             const el = document.getElementById('admin-defasagem-list');
             el.innerHTML = checklist.map(d => `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px;">
         <span style="flex:1;">${d.label}</span>
@@ -5446,7 +6204,7 @@ body.edit-mode #topbar {
         }
 
         async function salvarDefasagem() {
-            const checklist = getDocChecklist().slice(0, 9);
+            const checklist = await getDocChecklist().slice(0, 9);
             const data = {};
             checklist.forEach(d => {
                 const el = document.getElementById('def-' + d.field_key);
@@ -5542,6 +6300,7 @@ body.edit-mode #topbar {
                 b.classList.remove('active');
                 if (b.classList.contains(novoEstado)) b.classList.add('active');
             });
+            if (reportData && reportData.analysis_id === aid) populateExecutivo(reportData);
         }
         /* ===== FIM RODADA M ===== */
 
@@ -6041,11 +6800,11 @@ body.edit-mode #topbar {
 
         // ── CHECKLIST DE DOCS (empresa filha) ────────────────────────
 
-        function grupoRenderDocsEmpresa(analysisId) {
+        async function grupoRenderDocsEmpresa(analysisId) {
             const container = document.getElementById('gp-emp-docs-' + analysisId);
             if (!container) return;
             container.innerHTML = '';
-            const checklist = getDocChecklist().filter(d => GP_DOCS_INDIVIDUAIS.includes(d.field_key));
+            const checklist = await getDocChecklist().filter(d => GP_DOCS_INDIVIDUAIS.includes(d.field_key));
             checklist.forEach(doc => {
                 const files = (grupoEmpresaFiles[analysisId] && grupoEmpresaFiles[analysisId][doc.field_key]?.files) || [];
                 const hasFiles = files.length > 0;
@@ -6110,7 +6869,7 @@ body.edit-mode #topbar {
         }
 
         async function grupoUploadDocEmpresa(analysisId, fieldKey, file, fi) {
-            const checklist = getDocChecklist();
+            const checklist = await getDocChecklist();
             const docDef = checklist.find(d => d.field_key === fieldKey);
             const form = new FormData();
             form.append('field_key', fieldKey);
@@ -6148,11 +6907,11 @@ body.edit-mode #topbar {
 
         // ── CHECKLIST DE DOCS CONSOLIDADOS (do grupo) ────────────────
 
-        function grupoRenderDocsConsolidados() {
+        async function grupoRenderDocsConsolidados() {
             const container = document.getElementById('gp-docs-consolidados-list');
             if (!container) return;
             container.innerHTML = '';
-            const checklist = getDocChecklist().filter(d => GP_DOCS_CONSOLIDADOS.includes(d.field_key));
+            const checklist = await getDocChecklist().filter(d => GP_DOCS_CONSOLIDADOS.includes(d.field_key));
             checklist.forEach(doc => {
                 const files = (grupoConsolidadoFiles[doc.field_key]?.files) || [];
                 const hasFiles = files.length > 0;
@@ -6210,7 +6969,7 @@ body.edit-mode #topbar {
         }
 
         async function grupoUploadDocConsolidado(fieldKey, file, fi) {
-            const checklist = getDocChecklist();
+            const checklist = await getDocChecklist();
             const docDef = checklist.find(d => d.field_key === fieldKey);
             const form = new FormData();
             form.append('field_key', fieldKey);
@@ -7031,11 +7790,15 @@ body.edit-mode #topbar {
             }
         }
 
-        // Verifica se o usuário atual pode editar (gestor ou admin)
+        // Verifica se o usuário atual pode editar (gerente ou admin)
         function podeEditar() {
             if (!currentUser) return false;
             const perfil = (currentUser.perfil || '').toLowerCase();
-            return perfil === 'admin' || perfil === 'gestor' || perfil === 'gerente';
+            const podePerPerfil = ['superadmin', 'admin', 'gerente', 'analista'].includes(perfil);
+            const statusEditavel = ['done'].includes(
+                allAnalyses.find(a => a.id === analysisId)?.status || reportData?.status || 'done'
+            );
+            return podePerPerfil && statusEditavel;
         }
 
         // Mostra/esconde o botão de Modo Edição no topbar baseado em permissão
@@ -7044,6 +7807,166 @@ body.edit-mode #topbar {
             if (!btn) return;
             btn.style.display = (podeEditar() && analysisId) ? 'inline-flex' : 'none';
         }
+
+
+        // ---------------- DOCUMENTOS
+
+              function abrirNovoDoc() {
+                  document.getElementById('doc-idx').value = '';
+                  document.getElementById('doc-label').value = '';
+                  document.getElementById('doc-field-key').value = '';
+                  document.getElementById('doc-field-key').disabled = false;
+                  document.getElementById('doc-required').value = 'opcional';
+                  document.getElementById('doc-formats').value = '.pdf';
+                  document.getElementById('doc-ativo').value = 'true';
+                  document.getElementById('modal-doc').style.display = 'flex';
+              }
+
+              function editarDoc(id, fieldKey, label, required, formats, ativo, ordem) {
+                  document.getElementById('doc-idx').value = id;
+                  document.getElementById('doc-label').value = label;
+                  document.getElementById('doc-field-key').value = fieldKey;
+                  document.getElementById('doc-field-key').disabled = true; // no editar field_key
+                  document.getElementById('doc-required').value = required;
+                  document.getElementById('doc-formats').value = formats;
+                  document.getElementById('doc-ativo').value = ativo ? 'true' : 'false';
+                  document.getElementById('modal-doc').style.display = 'flex';
+              }
+
+              function fecharModalDoc() {
+                  document.getElementById('modal-doc').style.display = 'none';
+              }
+
+              async function salvarDoc() {
+                  const id = document.getElementById('doc-idx').value;
+                  const label = document.getElementById('doc-label').value.trim();
+                  const field_key = document.getElementById('doc-field-key').value.trim();
+                  const required = document.getElementById('doc-required').value;
+                  const formats = document.getElementById('doc-formats').value.trim();
+                  const ativo = document.getElementById('doc-ativo').value === 'true';
+                  if (!label) { showToast('Informe o nome do documento.', 'error'); return; }
+                  try {
+                      if (id) {
+                          const r = await fetch(API + '/admin/doc-checklist/' + id, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ label, required, formats, ativo })
+                          });
+                          if (!r.ok) { showToast('Erro ao salvar.', 'error'); return; }
+                      } else {
+                          if (!field_key) { showToast('Informe o field_key.', 'error'); return; }
+                          const r = await fetch(API + '/admin/doc-checklist', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ field_key, label, required, formats })
+                          });
+                          if (!r.ok) {
+                              const err = await r.json().catch(() => ({}));
+                              showToast(err.detail || 'Erro ao criar documento.', 'error');
+                              return;
+                          }
+                      }
+                      fecharModalDoc();
+                      await renderAdminDocs();
+                      showToast('Documento salvo.', 'success');
+                  } catch (e) {
+                      showToast('Erro de conexão.', 'error');
+                  }
+              }
+
+              async function toggleDoc(id, ativo) {
+                  try {
+                      const r = await fetch(API + '/admin/doc-checklist/' + id, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ ativo: !ativo })
+                      });
+                      if (!r.ok) { showToast('Erro ao atualizar.', 'error'); return; }
+                      await renderAdminDocs();
+                      showToast('Documento atualizado.', 'success');
+                  } catch (e) {
+                      showToast('Erro de conexão.', 'error');
+                  }
+              }
+
+              async function deletarDoc(id) {
+                  if (!confirm('Remover este documento do checklist?')) return;
+                  try {
+                      const r = await fetch(API + '/admin/doc-checklist/' + id, { method: 'DELETE' });
+                      if (!r.ok) {
+                          const err = await r.json().catch(() => ({}));
+                          showToast(err.detail || 'Erro ao remover.', 'error');
+                          return;
+                      }
+                      await renderAdminDocs();
+                      showToast('Documento removido.', 'info');
+                  } catch (e) {
+                      showToast('Erro de conexão.', 'error');
+                  }
+              }
+
+              async function salvarObsPosterior() {
+                  if (!reportData) return;
+                  const aid = reportData.analysis_id;
+                  const texto = document.getElementById('obs-posteriores-input')?.value?.trim();
+                  if (!texto) { showToast('Escreva uma observação antes de adicionar.', 'error'); return; }
+
+                  const cd = await getComiteData(aid) || {};
+                  if (!cd.obs_posteriores) cd.obs_posteriores = [];
+                  cd.obs_posteriores.push({
+                      texto,
+                      por: currentUser?.nome || currentUser?.email || '—',
+                      data: new Date().toLocaleDateString('pt-BR'),
+                      ts: Date.now(),
+                  });
+                  await saveComiteData(aid, cd);
+                  document.getElementById('obs-posteriores-input').value = '';
+                  renderObsPosteriores(cd.obs_posteriores);
+                  showToast('Observação adicionada.', 'success');
+              }
+
+              function renderObsPosteriores(lista) {
+                  const el = document.getElementById('obs-posteriores-lista');
+                  if (!el) return;
+                  if (!lista || !lista.length) {
+                      el.innerHTML = '<div style="font-size:12px;color:var(--secondary);font-style:italic;">Nenhuma observação registrada.</div>';
+                      return;
+                  }
+                  el.innerHTML = lista.map(o => `
+        <div style="background:var(--bg);border-radius:6px;padding:10px 12px;border-left:3px solid var(--primary);">
+            <div style="font-size:13px;color:var(--text);line-height:1.5;">${o.texto}</div>
+            <div style="font-size:11px;color:var(--secondary);margin-top:4px;">${o.por} · ${o.data}</div>
+        </div>`).join('');
+              }
+
+              let _customTagsCache = {};
+
+              function adicionarCustomTag(socioIdx, socioNome) {
+                  const input = document.getElementById(`custom-tag-input-${socioIdx}`);
+                  if (!input || !input.value.trim()) return;
+                  const tag = input.value.trim();
+                  if (!_customTagsCache[socioNome]) _customTagsCache[socioNome] = [];
+                  _customTagsCache[socioNome].push(tag);
+                  input.value = '';
+                  _renderCustomTagsInForm(socioIdx, socioNome);
+              }
+
+              function removerCustomTag(socioIdx, socioNome, tagIdx) {
+                  if (!_customTagsCache[socioNome]) return;
+                  _customTagsCache[socioNome].splice(tagIdx, 1);
+                  _renderCustomTagsInForm(socioIdx, socioNome);
+              }
+
+              function _renderCustomTagsInForm(socioIdx, socioNome) {
+                  const container = document.getElementById(`custom-tags-${socioIdx}`);
+                  if (!container) return;
+                  const tags = _customTagsCache[socioNome] || [];
+                  container.innerHTML = tags.map((t, ti) => `
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--primary);color:#fff;">
+            ${t}
+            <button onclick="removerCustomTag(${socioIdx},'${socioNome}',${ti})" style="background:none;border:none;color:#fff;cursor:pointer;font-size:12px;padding:0;line-height:1;">✕</button>
+        </span>`).join('');
+              }
 
         /* ===== ETAPA 2 FIM ===== */
 
@@ -7054,6 +7977,9 @@ body.edit-mode #topbar {
             tentarAutologin();
             carregarScoringConfig(); // ETAPA 5 — carrega pesos e limites do servidor
         });
+
+
+
     </script>
 </body>
 </html>
