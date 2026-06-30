@@ -1682,7 +1682,7 @@ body.edit-mode #topbar {
                     </div>
                     <div class="form-group">
                         <label>Limite Aprovado (R$)</label>
-                        <input type="number" id="decisao-limite" placeholder="0,00">
+                        <input type="text" id="decisao-limite" inputmode="numeric" placeholder="0,00">
                     </div>
                     <div class="form-group">
                         <label>Prazo</label>
@@ -1777,6 +1777,7 @@ body.edit-mode #topbar {
                     <!-- Pesos -->
                     <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:18px;">
                         <div style="font-weight:700;color:var(--primary);font-size:13px;margin-bottom:10px;">Pesos dos componentes</div>
+                        <div id="calib-tenant-info" style="display:none;"></div>
                         <div id="calib-pesos-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
                             <span style="font-size:13px;color:var(--text);">Soma:</span>
@@ -2742,7 +2743,9 @@ body.edit-mode #topbar {
 
             if (!analysisId) {
                 try {
-                    const r = await fetch(API + '/documents/create-analysis', { method: 'POST' });
+                    const form = new FormData();
+                    if (currentUser?.client_id) form.append('client_id', currentUser.client_id);
+                    const r = await fetch(API + '/documents/create-analysis', { method: 'POST', body: form });
                     if (!r.ok) throw new Error();
                     const d = await r.json();
                     analysisId = d.analysis_id;
@@ -3679,7 +3682,7 @@ body.edit-mode #topbar {
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:13px;">
                 ${d.limite ? `<div>
                     <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Limite Aprovado</div>
-                    <div style="font-size:16px;font-weight:800;color:var(--accent);">${formatCurrency(parseFloat(d.limite))}</div>
+                    <div style="font-size:16px;font-weight:800;color:var(--accent);">${formatCurrencyFull(parseFloat(d.limite))}</div>
                 </div>` : ''}
                 ${d.prazo ? `<div>
                     <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Prazo</div>
@@ -3978,7 +3981,7 @@ body.edit-mode #topbar {
                     <div class="form-group">
                         <h3>🔥 Limite recomendado pelo analista</h3>
                         <h4 style="font-size:22px;font-weight:800;color:var(--primary);margin:4px 0 8px;">
-                            ${p.limite ? formatCurrency(parseFloat(p.limite)) : 'R$ —'}
+                            ${p.limite ? formatCurrencyFull(parseFloat(p.limite)) : 'R$ —'}
                         </h4>
                         <div style="margin-top:20px;">
                             <h3>✅ Pontos fortes identificados pelo analista</h3>
@@ -4917,6 +4920,7 @@ body.edit-mode #topbar {
         + Adicionar áudio
         <input type="file" multiple accept=".mp3,.m4a,.wav,.ogg,.aac" style="display:none;" onchange="adicionarAnexoPosAnalise('visita-audio', this)">
       </label>
+      <span style="font-size:11px;color:var(--secondary);">máx. 10MB por arquivo</span>
       <span id="anexo-status-visita-audio" style="font-size:12px;color:var(--secondary);"></span>
     </div>
   </div>
@@ -4928,6 +4932,7 @@ body.edit-mode #topbar {
         + Adicionar vídeo
         <input type="file" multiple accept=".mp4,.mov,.avi,.mkv,.webm" style="display:none;" onchange="adicionarAnexoPosAnalise('visita-video', this)">
       </label>
+      <span style="font-size:11px;color:var(--secondary);">máx. 10MB por arquivo</span>
       <span id="anexo-status-visita-video" style="font-size:12px;color:var(--secondary);"></span>
     </div>
   </div>
@@ -5179,7 +5184,9 @@ body.edit-mode #topbar {
                     getAvAnalista(rd.analysis_id).then(av => {
                         if (document.getElementById('pa-parecer')) {
                             document.getElementById('pa-parecer').value = av.parecer || '';
-                            document.getElementById('pa-limite').value = av.limite || '';
+                            //document.getElementById('pa-limite').value = av.limite || '';
+                            aplicarMascaraMoeda(document.getElementById('pa-limite'));
+                            setValorMascarado('pa-limite', av.limite);
                             document.getElementById('pa-limite-mem').value = av.limite_mem || '';
                             document.getElementById('pa-nome-analista').value = av.nome_analista || '';
                             document.getElementById('pa-notas-finais').value = av.notas_finais || '';
@@ -5245,7 +5252,7 @@ body.edit-mode #topbar {
           <div class="section-block">
             <h3>🔥 Limite recomendado pelo analista</h3>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <input type="text" id="pa-limite" value="${avSaved.limite || ''}" placeholder="Ex: R$ 150.000" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;">
+              <input type="text" id="pa-limite" inputmode="numeric" value="${avSaved.limite || ''}" placeholder="Ex: R$ 150.000" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;">
               <input type="text" id="pa-limite-mem" value="${avSaved.limite_mem || ''}" placeholder="Memória de cálculo / justificativa" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;">
             </div>
           </div>
@@ -5278,7 +5285,7 @@ body.edit-mode #topbar {
                         html = `<div class="comite-status-banner ${st.includes('Aprovado') ? 'aprovado' : st === 'Recusado' ? 'recusado' : 'pendente'}">${st}</div>
             <div class="section-block"><h3>Detalhes da Decisão</h3>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
-                ${field('Limite Aprovado', formatCurrency(cd.decisao.limite))}
+                ${field('Limite Aprovado', formatCurrencyFull(cd.decisao.limite))}
                 ${field('Prazo', cd.decisao.prazo)}
                 ${field('Taxa', cd.decisao.taxa)}
                 ${field('Validade', cd.decisao.validade)}
@@ -5328,69 +5335,120 @@ body.edit-mode #topbar {
             }
         }
 
-        async function adicionarAnexoPosAnalise(fieldKey, inputEl) {
-            if (!analysisId) {
-                showToast('Análise não identificada.', 'error');
-                return;
-            }
-            const files = inputEl.files;
-            if (!files || files.length === 0) return;
+              const MAX_ANEXO_SIZE_BYTES = 10_485_760; // 10 MB
+              const MAX_ANEXO_SIZE_MB = 10;
 
-            const fieldLabel = {
-                'visita-fotos': 'Fotos da Visita',
-                'visita-audio': 'Áudio da Visita',
-                'visita-video': 'Vídeo da Visita',
-                'visita-doc': 'Documento da Visita',
-                'anexos': 'Outros Anexos',
-            }[fieldKey] || fieldKey;
-            const statusEl = document.getElementById('anexo-status-' + fieldKey);
-            if (statusEl) statusEl.textContent = 'Enviando ' + files.length + ' arquivo(s)...';
+              async function adicionarAnexoPosAnalise(fieldKey, inputEl) {
+                  if (!analysisId) {
+                      showToast('Análise não identificada.', 'error');
+                      return;
+                  }
+                  const files = inputEl.files;
+                  if (!files || files.length === 0) return;
 
-            let okCount = 0;
-            let errCount = 0;
-            for (const file of files) {
-                const form = new FormData();
-                form.append('field_key', fieldKey);
-                form.append('field_label', fieldLabel);
-                form.append('is_required', 'false');
-                form.append('file', file);
-                try {
-                    const r = await fetch(API + '/documents/' + analysisId + '/upload', { method: 'POST', body: form });
-                    if (r.ok) {
-                        const data = await r.json();
-                        visitFiles.push({
-                            fieldKey: fieldKey,
-                            label: fieldLabel,
-                            name: file.name,
-                            serverUrl: data.file_url,
-                            file: null
-                        });
-                        okCount++;
-                    } else {
-                        errCount++;
-                    }
-                } catch (e) {
-                    errCount++;
-                }
-            }
-            inputEl.value = '';
+                  const fieldLabel = {
+                      'visita-fotos': 'Fotos da Visita',
+                      'visita-audio': 'Áudio da Visita',
+                      'visita-video': 'Vídeo da Visita',
+                      'visita-doc': 'Documento da Visita',
+                      'anexos': 'Outros Anexos',
+                  }[fieldKey] || fieldKey;
+                  const statusEl = document.getElementById('anexo-status-' + fieldKey);
 
-            if (statusEl) {
-                statusEl.textContent = okCount + ' enviado(s)' + (errCount ? ' · ' + errCount + ' falha(s)' : '');
-                setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
-            }
+                  // validação de tamanho ANTES de qualquer upload
+                  const arquivosValidos = [];
+                  for (const file of files) {
+                      if (file.size > MAX_ANEXO_SIZE_BYTES) {
+                          showToast(`Arquivo "${file.name}" tem ${(file.size / 1024 / 1024).toFixed(2)}MB — limite máximo é ${MAX_ANEXO_SIZE_MB}MB.`, 'error');
+                          continue;
+                      }
+                      arquivosValidos.push(file);
+                  }
+                  if (!arquivosValidos.length) {
+                      inputEl.value = '';
+                      return;
+                  }
 
-            if (okCount) {
-                showToast(okCount + ' arquivo(s) anexado(s).', 'success');
-                // re-renderiza a aba Anexos para refletir os novos uploads
-                const pane = document.getElementById('apane-anexos');
-                if (pane && reportData) {
-                    pane.innerHTML = buildAbaContent('anexos', reportData);
-                }
-            } else if (errCount) {
-                showToast('Falha ao anexar arquivo(s).', 'error');
-            }
-        }
+                  if (statusEl) statusEl.textContent = 'Enviando ' + arquivosValidos.length + ' arquivo(s)...';
+
+                  let okCount = 0;
+                  let errCount = 0;
+                  for (const file of arquivosValidos) {
+                      try {
+                          // 1. solicitar presigned URL
+                          const presignRes = await fetch(API + '/documents/' + analysisId + '/presigned-url-anexo', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                  field_key: fieldKey,
+                                  filename: file.name,
+                                  content_type: file.type || 'application/octet-stream',
+                                  file_size: file.size,
+                              })
+                          });
+                          if (!presignRes.ok) {
+                              const err = await presignRes.json().catch(() => ({}));
+                              throw new Error(err.detail || 'Erro ao gerar URL de upload');
+                          }
+                          const { upload_url, s3_key } = await presignRes.json();
+
+                          // 2. upload direto pro S3
+                          const s3Res = await fetch(upload_url, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': file.type || 'application/octet-stream' },
+                              body: file,
+                          });
+                          if (!s3Res.ok) throw new Error('Falha no upload direto ao S3');
+
+                          // 3. confirmar
+                          const confirmRes = await fetch(API + '/documents/' + analysisId + '/confirm-upload-anexo', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                  s3_key,
+                                  field_key: fieldKey,
+                                  field_label: fieldLabel,
+                                  original_name: file.name,
+                                  file_size: file.size,
+                              })
+                          });
+                          if (!confirmRes.ok) throw new Error('Erro ao confirmar upload');
+                          const data = await confirmRes.json();
+
+                          visitFiles.push({
+                              fieldKey: fieldKey,
+                              label: fieldLabel,
+                              name: file.name,
+                              serverUrl: data.file_url,
+                              documentId: data.document_id,
+                              file: null
+                          });
+                          okCount++;
+                      } catch (e) {
+                          errCount++;
+                      }
+                  }
+                  inputEl.value = '';
+
+                  if (statusEl) {
+                      statusEl.textContent = okCount + ' enviado(s)' + (errCount ? ' · ' + errCount + ' falha(s)' : '');
+                      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 4000);
+                  }
+
+                  if (okCount) {
+                      showToast(okCount + ' arquivo(s) anexado(s).', 'success');
+                      const pane = document.getElementById('apane-anexos');
+                      if (pane && reportData) {
+                          pane.innerHTML = buildAbaContent('anexos', reportData);
+                      }
+                      const visitaPane = document.getElementById('apane-visita');
+                      if (visitaPane && reportData) {
+                          visitaPane.innerHTML = buildAbaContent('visita', reportData);
+                      }
+                  } else if (errCount) {
+                      showToast('Falha ao anexar arquivo(s).', 'error');
+                  }
+              }
 
         async function salvarObsAba(abaId, analysisId) {
             const el = document.getElementById('obs-' + abaId);
@@ -5498,7 +5556,7 @@ body.edit-mode #topbar {
                                 <div class="form-group">
                                     <h3>🔥 Limite recomendado pelo analista</h3>
                                     <h4 style="font-size:22px;font-weight:800;color:var(--primary);margin:4px 0 8px;">
-                                        ${p.limite ? formatCurrency(parseFloat(p.limite)) : 'R$ —'}
+                                        ${p.limite ? formatCurrencyFull(parseFloat(p.limite)) : 'R$ —'}
                                     </h4>
                                     <div style="margin-top:20px;">
                                         <h3>✅ Pontos fortes identificados pelo analista</h3>
@@ -5559,7 +5617,7 @@ body.edit-mode #topbar {
                 <h3>📋 Detalhes da Decisão</h3>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:13px;margin-bottom:12px;">
                     ${d.limite ? `<div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Limite Aprovado</div>
-                        <div style="font-size:16px;font-weight:800;color:var(--accent);">${formatCurrency(parseFloat(d.limite))}</div></div>` : ''}
+                        <div style="font-size:16px;font-weight:800;color:var(--accent);">${formatCurrencyFull(parseFloat(d.limite))}</div></div>` : ''}
                     ${d.prazo ? `<div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Prazo</div>
                         <div style="font-weight:600;">${d.prazo}</div></div>` : ''}
                     ${d.validade ? `<div><div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:2px;">Validade</div>
@@ -5636,6 +5694,8 @@ body.edit-mode #topbar {
                   const btnDevolver = document.getElementById('btn-devolver-revisao');
                   const esAnalista = currentUser?.perfil === 'analista';
                   const puedeRegistrar = ['superadmin', 'admin', 'gerente'].includes(currentUser?.perfil || '');
+                  const decLimInput = document.getElementById('decisao-limite');
+                  if (decLimInput) aplicarMascaraMoeda(decLimInput);
 
                   if (decisionada || esAnalista) {
                       // decisão registrada OU perfil analista — esconder tudo
@@ -5944,9 +6004,11 @@ body.edit-mode #topbar {
             const av = await getAvAnalista(aid);
             av.parecer = document.getElementById('pa-parecer')?.value || '';
             av.limite = document.getElementById('pa-limite')?.value || '';
+            av.limite = getValorMascarado('pa-limite') ?? '';
             av.limite_mem = document.getElementById('pa-limite-mem')?.value || '';
             av.nome_analista = document.getElementById('pa-nome-analista')?.value || '';
             av.notas_finais = document.getElementById('pa-notas-finais')?.value || '';
+
             await _saveAvAnalista(aid, av);
             const msg = document.getElementById('pa-save-msg');
             if (msg) { msg.textContent = '✅ Salvo com sucesso · ' + new Date().toLocaleTimeString('pt-BR'); setTimeout(() => msg.textContent = '', 3000); }
@@ -6023,7 +6085,7 @@ body.edit-mode #topbar {
         let adminAuth = false;
         const ADMIN_TABS_POR_PERFIL = {
             superadmin: ['empresas', 'usuarios', 'documentos', 'defasagem', 'calibracao', 'config', 'qualidade'],
-            admin: ['usuarios'],
+            admin: ['usuarios', 'calibracao'],
             gerente: [],
             analista: [],
             comite: [],
@@ -6444,20 +6506,33 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
         ];
         const _CALIB_LIMITES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
 
-        async function renderAdminCalibracao() {
-            // Recarrega do servidor para garantir valores atuais
-            let data = null;
-            try {
-                const r = await fetch(API + '/scoring/config');
-                if (r.ok) data = await r.json();
-            } catch (e) { }
-            if (!data) { data = Object.assign({}, SCORING_CONFIG, { defaults: SCORING_CONFIG }); }
-            // Atualiza cache local
-            Object.assign(SCORING_CONFIG, data);
+              async function renderAdminCalibracao() {
+                  const isAdmin = currentUser?.perfil === 'admin';
+                  const clientIdParam = isAdmin && currentUser?.client_id ? '?client_id=' + currentUser.client_id : '';
 
-            // Renderiza pesos (sliders + input numérico)
-            const pesosEl = document.getElementById('calib-pesos-list');
-            pesosEl.innerHTML = _CALIB_PESOS.map(p => `
+                  let data = null;
+                  try {
+                      const r = await fetch(API + '/scoring/config' + clientIdParam);
+                      if (r.ok) data = await r.json();
+                  } catch (e) { }
+                  if (!data) { data = Object.assign({}, SCORING_CONFIG, { defaults: SCORING_CONFIG }); }
+                  Object.assign(SCORING_CONFIG, data);
+
+                  // indicador de origem da config (apenas para admin de tenant)
+                  const headerEl = document.getElementById('calib-tenant-info');
+                  if (headerEl) {
+                      if (isAdmin) {
+                          headerEl.style.display = 'block';
+                          headerEl.innerHTML = data.is_custom
+                              ? `<div style="background:#dbeafe;color:#1e40af;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:12px;">✓ Esta empresa possui calibração própria.</div>`
+                              : `<div style="background:#fef3c7;color:#92400e;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:12px;">ℹ️ Usando a calibração padrão da plataforma. Salve para criar uma calibração própria da sua empresa.</div>`;
+                      } else {
+                          headerEl.style.display = 'none';
+                      }
+                  }
+
+                  const pesosEl = document.getElementById('calib-pesos-list');
+                  pesosEl.innerHTML = _CALIB_PESOS.map(p => `
         <div style="background:var(--bg);border-radius:6px;padding:10px 12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
             <span style="font-size:12px;font-weight:600;color:var(--text);">${p.label}</span>
@@ -6472,12 +6547,11 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
         </div>
       `).join('');
 
-            // Renderiza limites
-            const limEl = document.getElementById('calib-limites-list');
-            limEl.innerHTML = _CALIB_LIMITES.map((letra, idx) => {
-                const upper = idx === 0 ? '1000' : (data['limite_' + _CALIB_LIMITES[idx - 1]] - 1);
-                const lower = data['limite_' + letra];
-                return `
+                  const limEl = document.getElementById('calib-limites-list');
+                  limEl.innerHTML = _CALIB_LIMITES.map((letra, idx) => {
+                      const upper = idx === 0 ? '1000' : (data['limite_' + _CALIB_LIMITES[idx - 1]] - 1);
+                      const lower = data['limite_' + letra];
+                      return `
           <div style="background:var(--bg);border-radius:6px;padding:10px;">
             <div style="font-weight:700;color:var(--primary);font-size:14px;margin-bottom:4px;">Classe ${letra.toUpperCase()}</div>
             <div style="font-size:10px;color:var(--secondary);margin-bottom:6px;">Score ≥</div>
@@ -6487,7 +6561,7 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
             <div id="range-limite_${letra}" style="font-size:10px;color:var(--secondary);margin-top:4px;text-align:center;">${lower}–${upper}</div>
           </div>
         `;
-            }).join('') + `
+                  }).join('') + `
         <div style="background:#fee;border:1px dashed #fca5a5;border-radius:6px;padding:10px;">
           <div style="font-weight:700;color:#991b1b;font-size:14px;margin-bottom:4px;">Classe J</div>
           <div style="font-size:10px;color:var(--secondary);margin-bottom:6px;">Faixa fixa</div>
@@ -6495,16 +6569,17 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
         </div>
       `;
 
-            atualizarSomaCalib();
-            atualizarLimiteRange();
+                  atualizarSomaCalib();
+                  atualizarLimiteRange();
 
-            // Updated at / by
-            const upEl = document.getElementById('calib-updated');
-            if (data.updated_at) {
-                const dt = new Date(data.updated_at);
-                upEl.textContent = `Última alteração: ${dt.toLocaleString('pt-BR')} por ${data.updated_by || '—'}`;
-            } else { upEl.textContent = ''; }
-        }
+                  const upEl = document.getElementById('calib-updated');
+                  if (data.updated_at) {
+                      const dt = new Date(data.updated_at);
+                      upEl.textContent = `Última alteração: ${dt.toLocaleString('pt-BR')} por ${data.updated_by || '—'}`;
+                  } else { upEl.textContent = ''; }
+              }
+
+
 
         function atualizarSomaCalib() {
             let soma = 0;
@@ -6535,56 +6610,60 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
             if (jEl) jEl.textContent = parseInt(document.getElementById('calib-limite_i')?.value || 100);
         }
 
-        async function salvarCalibracao() {
-            const payload = {};
-            _CALIB_PESOS.forEach(p => { payload[p.k] = parseFloat(document.getElementById('calib-' + p.k).value); });
-            _CALIB_LIMITES.forEach(letra => { payload['limite_' + letra] = parseInt(document.getElementById('calib-limite_' + letra).value); });
-            // Valida decrescência
-            for (let i = 0; i < _CALIB_LIMITES.length - 1; i++) {
-                const a = payload['limite_' + _CALIB_LIMITES[i]];
-                const b = payload['limite_' + _CALIB_LIMITES[i + 1]];
-                if (a <= b) {
-                    showToast(`Limites devem ser decrescentes (${_CALIB_LIMITES[i].toUpperCase()}=${a} deve ser > ${_CALIB_LIMITES[i + 1].toUpperCase()}=${b})`, 'error');
-                    return;
-                }
-            }
-            const user = (typeof getUsuarioLogado === 'function') ? (getUsuarioLogado()?.nome || 'admin') : 'admin';
-            payload.updated_by = user;
-            try {
-                const r = await fetch(API + '/scoring/config', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-User-Role': 'admin' },
-                    body: JSON.stringify(payload)
-                });
-                if (!r.ok) {
-                    const err = await r.json().catch(() => ({}));
-                    throw new Error(err.detail || 'Falha ao salvar');
-                }
-                const data = await r.json();
-                Object.assign(SCORING_CONFIG, data);
-                showToast('Calibração salva. Análises novas usarão esta configuração.', 'success');
-                renderAdminCalibracao();
-            } catch (e) {
-                showToast('Erro: ' + e.message, 'error');
-            }
-        }
+              async function salvarCalibracao() {
+                  const payload = {};
+                  _CALIB_PESOS.forEach(p => { payload[p.k] = parseFloat(document.getElementById('calib-' + p.k).value); });
+                  _CALIB_LIMITES.forEach(letra => { payload['limite_' + letra] = parseInt(document.getElementById('calib-limite_' + letra).value); });
+                  for (let i = 0; i < _CALIB_LIMITES.length - 1; i++) {
+                      const a = payload['limite_' + _CALIB_LIMITES[i]];
+                      const b = payload['limite_' + _CALIB_LIMITES[i + 1]];
+                      if (a <= b) {
+                          showToast(`Limites devem ser decrescentes (${_CALIB_LIMITES[i].toUpperCase()}=${a} deve ser > ${_CALIB_LIMITES[i + 1].toUpperCase()}=${b})`, 'error');
+                          return;
+                      }
+                  }
+                  payload.updated_by = currentUser?.nome || 'admin';
+                  // admin de tenant grava na sua própria config; superadmin grava na global
+                  const isAdmin = currentUser?.perfil === 'admin';
+                  payload.client_id = (isAdmin && currentUser?.client_id) ? currentUser.client_id : null;
 
-        async function resetCalibracao() {
-            if (!confirm('Restaurar configuração padrão de pesos e limites?')) return;
-            try {
-                const r = await fetch(API + '/scoring/config/reset', {
-                    method: 'POST',
-                    headers: { 'X-User-Role': 'admin' },
-                });
-                if (!r.ok) throw new Error('Falha ao restaurar');
-                const data = await r.json();
-                Object.assign(SCORING_CONFIG, data);
-                showToast('Padrão restaurado.', 'success');
-                renderAdminCalibracao();
-            } catch (e) {
-                showToast('Erro: ' + e.message, 'error');
-            }
-        }
+                  try {
+                      const r = await fetch(API + '/scoring/config', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json', 'X-User-Role': currentUser?.perfil || 'admin' },
+                          body: JSON.stringify(payload)
+                      });
+                      if (!r.ok) {
+                          const err = await r.json().catch(() => ({}));
+                          throw new Error(err.detail || 'Falha ao salvar');
+                      }
+                      const data = await r.json();
+                      Object.assign(SCORING_CONFIG, data);
+                      showToast('Calibração salva. Análises novas usarão esta configuração.', 'success');
+                      renderAdminCalibracao();
+                  } catch (e) {
+                      showToast('Erro: ' + e.message, 'error');
+                  }
+              }
+
+              async function resetCalibracao() {
+                  if (!confirm('Restaurar configuração padrão de pesos e limites?')) return;
+                  const isAdmin = currentUser?.perfil === 'admin';
+                  const clientIdParam = (isAdmin && currentUser?.client_id) ? '?client_id=' + currentUser.client_id : '';
+                  try {
+                      const r = await fetch(API + '/scoring/config/reset' + clientIdParam, {
+                          method: 'POST',
+                          headers: { 'X-User-Role': currentUser?.perfil || 'admin' },
+                      });
+                      if (!r.ok) throw new Error('Falha ao restaurar');
+                      const data = await r.json();
+                      Object.assign(SCORING_CONFIG, data);
+                      showToast('Padrão restaurado.', 'success');
+                      renderAdminCalibracao();
+                  } catch (e) {
+                      showToast('Erro: ' + e.message, 'error');
+                  }
+              }
         /* ===== ETAPA 5 FIM ===== */
 
         async function salvarConfig() {
@@ -7463,6 +7542,36 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
             if (d.startsWith('negar') || d.startsWith('recusar') || d.startsWith('reprovar')) return 'var(--danger)';
             return 'var(--secondary)';
         }
+
+              function aplicarMascaraMoeda(inputEl) {
+                  inputEl.addEventListener('input', function () {
+                      let digits = this.value.replace(/\D/g, '');
+                      if (!digits) {
+                          this.dataset.rawValue = '';
+                          this.value = '';
+                          return;
+                      }
+                      const numero = parseInt(digits, 10) / 100;
+                      this.dataset.rawValue = numero;
+                      this.value = numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  });
+              }
+
+              function getValorMascarado(inputId) {
+                  const el = document.getElementById(inputId);
+                  if (!el) return null;
+                  const raw = el.dataset.rawValue;
+                  if (raw === undefined || raw === '') return null;
+                  return parseFloat(raw);
+              }
+
+              function setValorMascarado(inputId, valor) {
+                  const el = document.getElementById(inputId);
+                  if (!el || valor == null || valor === '') { if (el) el.value = ''; return; }
+                  const numero = parseFloat(valor);
+                  el.dataset.rawValue = numero;
+                  el.value = numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              }
 
         async function grupoCarregarConsolidado(grupoId) {
             const container = document.getElementById('gp-consolidado-container');
