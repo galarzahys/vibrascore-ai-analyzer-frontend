@@ -3501,7 +3501,7 @@ body.edit-mode #topbar {
             document.getElementById('capa-regime').textContent = e.regime_tributario ? '🏢 ' + e.regime_tributario : '';
             const a = allAnalyses.find(x => x.id === rd.analysis_id);
             document.getElementById('capa-analista-label').textContent = a?.analista ? '👤 ' + a.analista : '';
-            document.getElementById('capa-data').textContent = a?.data ? '📆 ' + a.data : '';
+            document.getElementById('capa-data').textContent = a?.data ? '📆 ' + formatarDataHora(a.data) : '';
 
             // indicadores inline
             const scores = rd.scores || {};
