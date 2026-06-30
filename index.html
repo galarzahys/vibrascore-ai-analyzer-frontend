@@ -1890,6 +1890,45 @@ body.edit-mode #topbar {
         </div>
     </div>
 
+    <!-- MODAL ADICIONAR SÓCIO -->
+    <div id="modal-socio" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+        <div style="background:var(--white);border-radius:var(--radius-lg);padding:28px;width:420px;max-width:95vw;box-shadow:var(--shadow-lg);">
+            <div style="font-family:'Nunito',Arial,sans-serif;font-weight:800;font-size:18px;color:var(--primary);margin-bottom:16px;">Adicionar Sócio</div>
+            <input type="hidden" id="socio-novo-idx">
+            <div class="form-group"><label>Nome</label><input type="text" id="socio-nome" placeholder="Nome completo"></div>
+            <div class="form-group"><label>Cargo</label><input type="text" id="socio-cargo" placeholder="Ex: Sócio, Administrador"></div>
+            <div class="form-group"><label>Participação (%)</label><input type="number" id="socio-participacao" placeholder="0" step="0.01"></div>
+            <div class="form-group"><label>Geração</label><input type="text" id="socio-geracao" placeholder="Ex: Geração X, Geração Y"></div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn btn-primary" onclick="confirmarAdicionarSocio()">Adicionar</button>
+                <button class="btn btn-secondary" onclick="fecharModalSocio()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ADICIONAR EMPRESA DO GRUPO -->
+    <div id="modal-empresa-grupo" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+        <div style="background:var(--white);border-radius:var(--radius-lg);padding:28px;width:420px;max-width:95vw;box-shadow:var(--shadow-lg);">
+            <div style="font-family:'Nunito',Arial,sans-serif;font-weight:800;font-size:18px;color:var(--primary);margin-bottom:16px;">Adicionar Empresa do Grupo</div>
+            <input type="hidden" id="grupo-novo-idx">
+            <div class="form-group"><label>Nome da empresa</label><input type="text" id="grupo-empresa" placeholder="Razão social"></div>
+            <div class="form-group"><label>CNPJ</label><input type="text" id="grupo-cnpj" placeholder="00.000.000/0000-00"></div>
+            <div class="form-group"><label>Relação</label><input type="text" id="grupo-relacao" placeholder="Ex: Sócio comum, Filial"></div>
+            <div class="form-group">
+                <label>Situação</label>
+                <select id="grupo-situacao">
+                    <option value="ATIVA">Ativa</option>
+                    <option value="FINALIZADA">Finalizada</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Restrições</label><input type="text" id="grupo-restricoes" placeholder="Opcional"></div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn btn-primary" onclick="confirmarAdicionarEmpresaGrupo()">Adicionar</button>
+                <button class="btn btn-secondary" onclick="fecharModalEmpresaGrupo()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LIGHTBOX -->
     <div id="lightbox">
         <button id="lightbox-close" onclick="fecharLightbox()">✕</button>
@@ -2409,6 +2448,12 @@ body.edit-mode #topbar {
                 s.classList.toggle('active', i === n);
                 s.classList.toggle('done', i < n);
             });
+            // reset do estado de execução ao navegar pelo wizard
+            if (n === 3) {
+                analysisRunning = false;
+                const btn = document.getElementById('btn-start-analysis');
+                if (btn) btn.disabled = false;
+            }
         }
 
         function voltarEtapa(n) { irParaWizard(n); }
@@ -2462,6 +2507,7 @@ body.edit-mode #topbar {
             <div class="doc-info">
               <div class="doc-label">${doc.label}</div>
               <div class="doc-sublabel">${doc.description || doc.formats}</div>
+              <div class="doc-sublabel">${doc.description || doc.formats} <span style="color:var(--secondary);">· máx. ${MAX_FILE_SIZE_MB}MB</span></div>
             </div>
             <div class="doc-actions">
               <span class="doc-tag ${tagCls}" id="doc-req-${doc.field_key}">${tagTxt}</span>
@@ -2550,24 +2596,30 @@ body.edit-mode #topbar {
         function handleFileSelect(event, fieldKey) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-            // inicializar estrutura se necessário
             if (!fieldFiles[fieldKey]) fieldFiles[fieldKey] = { files: [] };
             if (!fieldFiles[fieldKey].files) fieldFiles[fieldKey].files = [];
             const file = files[0];
-            // verificar limite de 4
+
             if (fieldFiles[fieldKey].files.length >= 4) {
                 showToast('Máximo de 4 arquivos por campo.', 'error');
                 event.target.value = '';
                 return;
             }
+
+            // validação de tamanho — bloqueia ANTES de tentar upload
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                showToast(
+                    `Arquivo "${file.name}" tem ${(file.size / 1024 / 1024).toFixed(2)}MB — o limite máximo é ${MAX_FILE_SIZE_MB}MB. Comprima ou divida o arquivo antes de enviar.`,
+                    'error'
+                );
+                event.target.value = '';
+                return;
+            }
+
             const fi = fieldFiles[fieldKey].files.length;
-            // adicionar entrada provisória
             fieldFiles[fieldKey].files.push({ name: file.name, size: file.size, valid: null, metrics: null, serverUrl: null, file });
-            // atualizar ícone e borda
             updateDocItemState(fieldKey);
-            // atualizar lista de arquivos
             refreshFilesList(fieldKey);
-            // fazer upload
             uploadDocumento(fieldKey, file, fi);
             event.target.value = '';
         }
@@ -2622,6 +2674,19 @@ body.edit-mode #topbar {
 
         async function removerArquivo(fieldKey, fi) {
             if (!fieldFiles[fieldKey]?.files) return;
+            const f = fieldFiles[fieldKey].files[fi];
+
+            // borrar do backend se já foi enviado
+            if (f?.documentId && analysisId) {
+                try {
+                    await fetch(API + '/documents/' + analysisId + '/doc/' + f.documentId, {
+                        method: 'DELETE'
+                    });
+                } catch (e) {
+                    console.warn('Erro ao remover documento do servidor:', e);
+                }
+            }
+
             fieldFiles[fieldKey].files.splice(fi, 1);
             if (fieldFiles[fieldKey].files.length === 0) delete fieldFiles[fieldKey];
             updateDocItemState(fieldKey);
@@ -2640,10 +2705,9 @@ body.edit-mode #topbar {
                     tag.textContent = doc.required === 'hard' ? 'Obrigatório' : doc.required === 'obrigatorio' ? 'Obrigatório' : 'Opcional';
                     tag.className = 'doc-tag ' + (isRequired ? 'required' : 'optional');
                 }
-                renderDocList(); // re-renderizar para restaurar botão
+                renderDocList();
                 return;
             }
-            // re-renderizar métricas do último arquivo
             const lastFile = fieldFiles[fieldKey].files[fieldFiles[fieldKey].files.length - 1];
             let metricsEl = document.getElementById('doc-metrics-' + fieldKey);
             if (metricsEl) metricsEl.remove();
@@ -2653,82 +2717,29 @@ body.edit-mode #topbar {
             }
         }
 
+        const MAX_FILE_SIZE_BYTES = 2_621_440; // 2.5 MB
+        const MAX_FILE_SIZE_MB = 2.5;
+
         async function uploadDocumento(fieldKey, file, fi) {
             const SKIP_UPLOAD_KEYS = ['visita-audio', 'visita-video', 'visita-fotos', 'visita-doc', 'anexos'];
             const checklist = await getDocChecklist();
             const docDef = checklist.find(d => d.field_key === fieldKey);
 
-            // ETAPA 4 — outros bureaus seguem caminho rápido (sem análise client-side pesada que trava com múltiplos PDFs)
-            // O backend ainda recebe o upload normalmente; a IA processa via BUREAU_LABELS no analysis_service.py.
-            const ehOutroBureau = String(fieldKey).startsWith('outro_bureau_');
-            if (ehOutroBureau) {
-                if (!analysisId) {
-                    try {
-                        const r = await fetch(API + '/documents/create-analysis', { method: 'POST' });
-                        if (!r.ok) throw new Error();
-                        const d = await r.json();
-                        analysisId = d.analysis_id;
-                    } catch (e) {
-                        showToast('Erro ao criar análise no servidor.', 'error');
-                        return;
-                    }
-                }
-                // Marca válido localmente já (UX rápida); upload backend em background
+            // ── VALIDAÇÃO DE TAMANHO (2.5MB) ────────────────────────────
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                showToast(
+                    `Arquivo "${file.name}" excede o limite de ${MAX_FILE_SIZE_MB}MB (${(file.size / 1024 / 1024).toFixed(2)}MB). Reduza o tamanho e tente novamente.`,
+                    'error'
+                );
                 if (fieldFiles[fieldKey]?.files?.[fi]) {
-                    fieldFiles[fieldKey].files[fi].valid = true;
-                    fieldFiles[fieldKey].files[fi].metrics = null;
+                    fieldFiles[fieldKey].files[fi].valid = false;
+                    fieldFiles[fieldKey].files[fi].sizeError = true;
                 }
                 updateDocItemState(fieldKey);
                 refreshFilesList(fieldKey);
-                try {
-                    const form = new FormData();
-                    form.append('field_key', fieldKey);
-                    form.append('field_label', docDef ? docDef.label : fieldKey);
-                    form.append('is_required', 'false');
-                    form.append('file', file);
-                    const r = await fetch(API + '/documents/' + analysisId + '/upload', { method: 'POST', body: form });
-                    if (r.ok) {
-                        const data = await r.json();
-                        if (fieldFiles[fieldKey]?.files?.[fi]) {
-                            fieldFiles[fieldKey].files[fi].serverUrl = data.file_url || null;
-                        }
-                        if (data.file_url) docUrlMap[fieldKey] = data.file_url;
-                    }
-                } catch (e) { /* silencioso — UI já está OK */ }
                 return;
             }
 
-            // Visita e anexos: armazenar apenas localmente, sem enviar à IA
-            if (SKIP_UPLOAD_KEYS.includes(fieldKey)) {
-                const localUrl = URL.createObjectURL(file);
-                if (fieldFiles[fieldKey]?.files?.[fi]) {
-                    fieldFiles[fieldKey].files[fi].valid = true;
-                    fieldFiles[fieldKey].files[fi].serverUrl = localUrl;
-                    fieldFiles[fieldKey].files[fi].localOnly = true;
-                }
-                updateDocItemState(fieldKey);
-                refreshFilesList(fieldKey);
-                // tentar upload em background para persistência, mas sem bloquear e sem métricas
-                if (analysisId) {
-                    try {
-                        const form = new FormData();
-                        form.append('field_key', fieldKey);
-                        form.append('field_label', docDef ? docDef.label : fieldKey);
-                        form.append('is_required', 'false');
-                        form.append('file', file);
-                        const r = await fetch(API + '/documents/' + analysisId + '/upload', { method: 'POST', body: form });
-                        if (r.ok) {
-                            const data = await r.json();
-                            if (fieldFiles[fieldKey]?.files?.[fi]) {
-                                fieldFiles[fieldKey].files[fi].serverUrl = data.file_url || localUrl;
-                            }
-                        }
-                    } catch (e) { /* silencioso — arquivo já está salvo localmente */ }
-                }
-                return;
-            }
-
-            // Documentos analíticos: fluxo normal com validação e métricas
             if (!analysisId) {
                 try {
                     const r = await fetch(API + '/documents/create-analysis', { method: 'POST' });
@@ -2743,28 +2754,101 @@ body.edit-mode #topbar {
                     return;
                 }
             }
-            const form = new FormData();
-            form.append('field_key', fieldKey);
-            form.append('field_label', docDef ? docDef.label : fieldKey);
-            form.append('is_required', (docDef && (docDef.required === 'hard' || docDef.required === 'obrigatorio')) ? 'true' : 'false');
-            form.append('file', file);
+
+            const ehOutroBureau = String(fieldKey).startsWith('outro_bureau_');
+            const ehSkipUpload = SKIP_UPLOAD_KEYS.includes(fieldKey);
+
+            // marca como "enviando" visualmente já de início
+            if (ehSkipUpload) {
+                const localUrl = URL.createObjectURL(file);
+                if (fieldFiles[fieldKey]?.files?.[fi]) {
+                    fieldFiles[fieldKey].files[fi].valid = true;
+                    fieldFiles[fieldKey].files[fi].serverUrl = localUrl;
+                    fieldFiles[fieldKey].files[fi].localOnly = true;
+                }
+                updateDocItemState(fieldKey);
+                refreshFilesList(fieldKey);
+            } else if (ehOutroBureau) {
+                if (fieldFiles[fieldKey]?.files?.[fi]) {
+                    fieldFiles[fieldKey].files[fi].valid = true;
+                    fieldFiles[fieldKey].files[fi].metrics = null;
+                }
+                updateDocItemState(fieldKey);
+                refreshFilesList(fieldKey);
+            }
+
             try {
-                const r = await fetch(API + '/documents/' + analysisId + '/upload', { method: 'POST', body: form });
-                const data = await r.json();
-                // métricas base do backend (fallback)
+                // ── 1. Solicitar presigned URL ──────────────────────────
+                const presignRes = await fetch(API + '/documents/' + analysisId + '/presigned-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        field_key: fieldKey,
+                        filename: file.name,
+                        content_type: file.type || 'application/octet-stream',
+                        file_size: file.size,
+                    })
+                });
+
+                if (!presignRes.ok) {
+                    const err = await presignRes.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Erro ao gerar URL de upload');
+                }
+                const { upload_url, s3_key } = await presignRes.json();
+
+                // ── 2. Upload direto pro S3 ─────────────────────────────
+                const s3Res = await fetch(upload_url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+                    body: file,
+                });
+                if (!s3Res.ok) throw new Error('Falha no upload direto ao S3');
+
+                // ── 3. Confirmar upload — backend baixa, valida e salva ─
+                const confirmRes = await fetch(API + '/documents/' + analysisId + '/confirm-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        s3_key,
+                        field_key: fieldKey,
+                        field_label: docDef ? docDef.label : fieldKey,
+                        original_name: file.name,
+                        is_required: (docDef && (docDef.required === 'hard' || docDef.required === 'obrigatorio')) ? true : false,
+                    })
+                });
+                if (!confirmRes.ok) throw new Error('Erro ao confirmar upload');
+                const data = await confirmRes.json();
+
+                // ── Resultado: mesmo tratamento de antes ────────────────
+                if (ehSkipUpload) {
+                    if (fieldFiles[fieldKey]?.files?.[fi]) {
+                        fieldFiles[fieldKey].files[fi].serverUrl = data.file_url || fieldFiles[fieldKey].files[fi].serverUrl;
+                        fieldFiles[fieldKey].files[fi].documentId = data.document_id || null;
+                    }
+                    return;
+                }
+
+                if (ehOutroBureau) {
+                    if (fieldFiles[fieldKey]?.files?.[fi]) {
+                        fieldFiles[fieldKey].files[fi].serverUrl = data.file_url || null;
+                        fieldFiles[fieldKey].files[fi].documentId = data.document_id || null;
+                    }
+                    if (data.file_url) docUrlMap[fieldKey] = data.file_url;
+                    return;
+                }
+
+                // documentos analíticos — fluxo completo com métricas
                 let metrics = buildMetrics(data, file);
-                // análise client-side real (leitura, compatibilidade, defasagem) — sobrepõe quando disponível
                 try {
                     const clientMetrics = await analisarDocumentoClientSide(file, fieldKey);
                     if (clientMetrics) metrics = clientMetrics;
                 } catch (errAnalise) { /* mantém fallback do backend */ }
 
                 if (fieldFiles[fieldKey]?.files?.[fi]) {
-                    // ETAPA 4 — outros bureaus não estão no DOC_KEYWORDS do validador ainda; aceita por padrão
-                    const ehOutroBureau = String(fieldKey).startsWith('outro_bureau_');
-                    fieldFiles[fieldKey].files[fi].valid = ehOutroBureau ? true : data.is_valid;
+                    fieldFiles[fieldKey].files[fi].valid = data.is_valid;
                     fieldFiles[fieldKey].files[fi].metrics = metrics;
                     fieldFiles[fieldKey].files[fi].serverUrl = data.file_url || null;
+                    fieldFiles[fieldKey].files[fi].documentId = data.document_id || null;
                 }
                 if (data.file_url) docUrlMap[fieldKey] = data.file_url;
                 updateDocItemState(fieldKey);
@@ -2773,11 +2857,12 @@ body.edit-mode #topbar {
                 if (old) old.remove();
                 const item = document.getElementById('doc-item-' + fieldKey);
                 if (item) item.insertAdjacentHTML('beforeend', renderMetrics(fieldKey, metrics, fieldFiles[fieldKey]?.files?.length || 1));
+
             } catch (e) {
                 if (fieldFiles[fieldKey]?.files?.[fi]) fieldFiles[fieldKey].files[fi].valid = false;
                 updateDocItemState(fieldKey);
                 refreshFilesList(fieldKey);
-                showToast('Erro no upload de ' + file.name, 'error');
+                showToast('Erro no upload de ' + file.name + ': ' + (e.message || ''), 'error');
             }
         }
 
@@ -2832,12 +2917,15 @@ body.edit-mode #topbar {
                 if (data.can_run) {
                     msg.style.color = 'var(--accent)';
                     msg.textContent = '✅ Documentos verificados — análise pode ser iniciada.';
+                    irParaWizard(3);
                 } else {
-                    msg.style.color = 'var(--warn)';
+                    msg.style.color = 'var(--danger)';
                     msg.textContent = '⚠️ ' + (data.issues ? data.issues.join(' | ') : 'Verifique os documentos obrigatórios.');
+                    showToast('Envie todos os documentos obrigatórios antes de avançar.', 'error');
                 }
-            } catch (e) { /* continuar mesmo assim */ }
-            irParaWizard(3);
+            } catch (e) {
+                showToast('Erro ao verificar documentos. Tente novamente.', 'error');
+            }
         }
 
         function limparHistorico() {
@@ -4057,7 +4145,8 @@ body.edit-mode #topbar {
                             _pathGeracao: base + '.geracao',
                         });
                     });
-                    const alteracoes = e.alteracoes_contratuais || [];
+                    const cad = raw.cadastral || {};
+                    const alteracoes = cad.alteracoes || e.alteracoes_contratuais || [];
                     html = `
           <div class="section-block">
             <h3>Identificação</h3>
@@ -4073,20 +4162,20 @@ body.edit-mode #topbar {
               ${fieldE('CNAE Principal', 'empresa.cnae', e.cnae)}
             </div>
           </div>
-          <div class="section-block">
-            <h3>Contato e Estrutura</h3>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:13px;">
-              ${fieldE('Site', 'empresa.site', e.site)}
-              ${fieldE('Endereço', 'empresa.endereco', e.endereco)}
-              ${field('Município / UF', e.municipio ? e.municipio + (e.uf ? ' — ' + e.uf : '') : '—')}
-              ${fieldE('CEP', 'empresa.cep', e.cep)}
-              ${fieldE('Telefone', 'empresa.telefone', e.telefone)}
-              ${fieldE('E-mail', 'empresa.email', e.email)}
-              ${fieldE('Funcionários', 'empresa.funcionarios', e.funcionarios, { tipo: 'number' })}
-              ${fieldE('Natureza Jurídica', 'empresa.natureza_juridica', e.natureza_juridica)}
-              ${fieldE('Atividade Principal', 'empresa.atividade_principal', e.atividade_principal)}
+            <div class="section-block">
+                <h3>Contato e Estrutura</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:13px;">
+                    ${fieldE('Site', 'raw.cadastral.site', cad.site)}
+                    ${fieldE('Endereço', 'raw.cadastral.logradouro', cad.logradouro)}
+                    ${field('Município / UF', cad.municipio ? cad.municipio + (cad.uf ? ' — ' + cad.uf : '') : '—')}
+                    ${fieldE('CEP', 'raw.cadastral.cep', cad.cep)}
+                    ${fieldE('Telefone', 'raw.cadastral.telefone', cad.telefone)}
+                    ${fieldE('E-mail', 'raw.cadastral.email', cad.email)}
+                    ${fieldE('Funcionários', 'raw.cadastral.funcionarios', cad.funcionarios)}
+                    ${fieldE('Natureza Jurídica', 'empresa.natureza_juridica', e.natureza_juridica)}
+                    ${fieldE('Atividade Principal', 'empresa.atividade_principal', e.atividade_principal)}
+                </div>
             </div>
-          </div>
           <div class="section-block">
             <h3>Representantes e Papéis</h3>
             ${qsaList.length ? `<table class="data-table">
@@ -4666,56 +4755,65 @@ body.edit-mode #topbar {
                 }
 
                 case 'hist-interno': {
-                    const histSaved = getHistoricoInterno(rd.analysis_id);
-                    // calcular tempo desde a data
-                    let tempoStr = '—';
-                    const dtCliente = histSaved.cliente_desde || histSaved.tempo_relacionamento || '';
-                    if (dtCliente && dtCliente.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                        const diff = Math.floor((Date.now() - new Date(dtCliente).getTime()) / (1000 * 60 * 60 * 24));
-                        const anos = Math.floor(diff / 365);
-                        const meses = Math.floor((diff % 365) / 30);
-                        tempoStr = anos > 0 ? `${anos} ano${anos > 1 ? 's' : ''} e ${meses} mês${meses !== 1 ? 'es' : ''}` : `${meses} mês${meses !== 1 ? 'es' : ''}`;
-                    } else if (dtCliente) {
-                        tempoStr = dtCliente;
-                    }
-                    const valorNeg = histSaved.valor_total_negociado || histSaved.volume_medio || '';
-                    const valFormatted = valorNeg ? 'R$ ' + parseFloat(valorNeg.replace(/\./g, '').replace(',', '.') || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—';
+                    html = `<div class="section-block" id="hist-interno-container">
+      <h3>Histórico Interno do Cliente</h3>
+      <div style="font-size:13px;color:var(--secondary);">Carregando...</div>
+    </div>`;
 
-                    html = `<div class="section-block">
-            <h3>Histórico Interno do Cliente</h3>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-              <div>
-                <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Cliente desde</div>
-                <div style="font-size:15px;font-weight:700;color:var(--primary);">${dtCliente ? new Date(dtCliente + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</div>
-                <div style="font-size:12px;color:var(--secondary);margin-top:2px;">${tempoStr}</div>
-              </div>
-              <div>
-                <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Valor total negociado</div>
-                <div style="font-family:'Nunito',Arial,sans-serif;font-size:18px;font-weight:800;color:var(--accent);">${valFormatted}</div>
-              </div>
-              <div>
-                <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Pontualidade nos pagamentos</div>
-                <div style="display:inline-block;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;
-                  background:${histSaved.pontualidade === 'Ótima' ? '#d1fae5' : histSaved.pontualidade === 'Boa' ? '#dbeafe' : histSaved.pontualidade === 'Regular' ? '#fef3c7' : '#fee2e2'};
-                  color:${histSaved.pontualidade === 'Ótima' ? '#065f46' : histSaved.pontualidade === 'Boa' ? '#1e40af' : histSaved.pontualidade === 'Regular' ? '#92400e' : '#991b1b'};">
-                  ${histSaved.pontualidade || '—'}
-                </div>
-              </div>
-              <div>
-                <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Histórico de inadimplência</div>
-                <div style="display:inline-block;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;
-                  background:${histSaved.inadimplencia === 'Nunca' ? '#d1fae5' : histSaved.inadimplencia === 'Raramente' ? '#dbeafe' : histSaved.inadimplencia === 'Eventualmente' ? '#fef3c7' : '#fee2e2'};
-                  color:${histSaved.inadimplencia === 'Nunca' ? '#065f46' : histSaved.inadimplencia === 'Raramente' ? '#1e40af' : histSaved.inadimplencia === 'Eventualmente' ? '#92400e' : '#991b1b'};">
-                  ${histSaved.inadimplencia || '—'}
-                </div>
+                    // carregar dados reais em background e popular
+                    getHistoricoInterno(rd.analysis_id).then(histSaved => {
+                        const container = document.getElementById('hist-interno-container');
+                        if (!container) return;
+
+                        let tempoStr = '—';
+                        const dtCliente = histSaved.cliente_desde || histSaved.tempo_relacionamento || '';
+                        if (dtCliente && dtCliente.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            const diff = Math.floor((Date.now() - new Date(dtCliente).getTime()) / (1000 * 60 * 60 * 24));
+                            const anos = Math.floor(diff / 365);
+                            const meses = Math.floor((diff % 365) / 30);
+                            tempoStr = anos > 0 ? `${anos} ano${anos > 1 ? 's' : ''} e ${meses} mês${meses !== 1 ? 'es' : ''}` : `${meses} mês${meses !== 1 ? 'es' : ''}`;
+                        } else if (dtCliente) {
+                            tempoStr = dtCliente;
+                        }
+                        const valorNeg = histSaved.valor_total_negociado || histSaved.volume_medio || '';
+                        const valFormatted = valorNeg ? 'R$ ' + parseFloat(valorNeg.replace(/\./g, '').replace(',', '.') || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—';
+
+                        container.innerHTML = `
+          <h3>Histórico Interno do Cliente</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Cliente desde</div>
+              <div style="font-size:15px;font-weight:700;color:var(--primary);">${dtCliente ? new Date(dtCliente + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</div>
+              <div style="font-size:12px;color:var(--secondary);margin-top:2px;">${tempoStr}</div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Valor total negociado</div>
+              <div style="font-family:'Nunito',Arial,sans-serif;font-size:18px;font-weight:800;color:var(--accent);">${valFormatted}</div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Pontualidade nos pagamentos</div>
+              <div style="display:inline-block;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;
+                background:${histSaved.pontualidade === 'Ótima' ? '#d1fae5' : histSaved.pontualidade === 'Boa' ? '#dbeafe' : histSaved.pontualidade === 'Regular' ? '#fef3c7' : '#fee2e2'};
+                color:${histSaved.pontualidade === 'Ótima' ? '#065f46' : histSaved.pontualidade === 'Boa' ? '#1e40af' : histSaved.pontualidade === 'Regular' ? '#92400e' : '#991b1b'};">
+                ${histSaved.pontualidade || '—'}
               </div>
             </div>
-            ${histSaved.obs ? `<div style="padding:12px 14px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text);line-height:1.6;border-left:3px solid var(--secondary);">
-              <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:4px;">Observações</div>
-              ${histSaved.obs}
-            </div>` : ''}
-            ${!histSaved.pontualidade && !dtCliente ? `<div style="font-size:13px;color:var(--secondary);padding:12px 0;">Nenhum histórico interno registrado. Preencha na etapa de upload ao criar ou reabrir a análise.</div>` : ''}
-          </div>`;
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Histórico de inadimplência</div>
+              <div style="display:inline-block;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;
+                background:${histSaved.inadimplencia === 'Nunca' ? '#d1fae5' : histSaved.inadimplencia === 'Raramente' ? '#dbeafe' : histSaved.inadimplencia === 'Eventualmente' ? '#fef3c7' : '#fee2e2'};
+                color:${histSaved.inadimplencia === 'Nunca' ? '#065f46' : histSaved.inadimplencia === 'Raramente' ? '#1e40af' : histSaved.inadimplencia === 'Eventualmente' ? '#92400e' : '#991b1b'};">
+                ${histSaved.inadimplencia || '—'}
+              </div>
+            </div>
+          </div>
+          ${histSaved.obs ? `<div style="padding:12px 14px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text);line-height:1.6;border-left:3px solid var(--secondary);">
+            <div style="font-size:10px;font-weight:700;color:var(--secondary);text-transform:uppercase;margin-bottom:4px;">Observações</div>
+            ${histSaved.obs}
+          </div>` : ''}
+          ${!histSaved.pontualidade && !dtCliente ? `<div style="font-size:13px;color:var(--secondary);padding:12px 0;">Nenhum histórico interno registrado. Preencha na etapa de upload ao criar ou reabrir a análise.</div>` : ''}
+        `;
+                    });
                     break;
                 }
 
@@ -4904,8 +5002,6 @@ body.edit-mode #topbar {
                 }
 
                 case 'qsa': {
-                    // ETAPA 2.3.7 (parte 2) — aba QSA dedicada
-                    // Mesmos paths usados em Cadastral → Representantes; consistência total
                     const _qsaRaw = rd.qsa || [];
                     const qsaCards = _qsaRaw.map((q, idx) => {
                         const base = 'qsa.' + idx;
@@ -4928,40 +5024,65 @@ body.edit-mode #topbar {
                         });
                     });
 
-                    html = `<div class="section-block"><h3>Quadro Societário</h3>${qsaCards.map(q => `<div style="background:var(--bg);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-              <div class="qsa-avatar" style="width:40px;height:40px;">${q.nome ? q.nome[0].toUpperCase() : '?'}</div>
-              <div>
-                <div style="font-weight:700;font-size:14px;color:var(--primary);">${renderField(q._pathNome, q.nome)}</div>
-                <div style="font-size:12px;color:var(--secondary);display:flex;gap:6px;align-items:center;">
-                  ${renderField(q._pathCargo, q.cargo)} ·
-                  ${renderField(q._pathPart, q.participacao_pct, { tipo: 'number', format: v => v == null ? '—' : v + '%' })}
-                </div>
-              </div>
+                    html = `<div class="section-block"><h3>Quadro Societário</h3>${qsaCards.map(q => `<div style="background:var(--bg);border-radius:var(--radius);padding:16px;margin-bottom:12px;position:relative;">
+        ${editMode ? `<button onclick="removerSocioManual(${q._idx})" style="position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;" title="Remover sócio">✕</button>` : ''}
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <div class="qsa-avatar" style="width:40px;height:40px;">${q.nome ? q.nome[0].toUpperCase() : '?'}</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--primary);">${renderField(q._pathNome, q.nome)}</div>
+            <div style="font-size:12px;color:var(--secondary);display:flex;gap:6px;align-items:center;">
+              ${renderField(q._pathCargo, q.cargo)} ·
+              ${renderField(q._pathPart, q.participacao_pct, { tipo: 'number', format: v => v == null ? '—' : v + '%' })}
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
-              ${fieldE('Geração', q._pathGeracao, q.geracao)}
-              ${fieldE('Bens arrestáveis', q._pathBens, q.bens_arrestaveis, { tipo: 'number', format: formatCurrencyFull })}
-              ${fieldE('IRPF disponível', q._pathIRPF, q.irpf_disponivel, { format: v => v ? 'Sim' : 'Não' })}
-              ${(q.analise_geracional || currentOverrides[q._pathAnGer]) ? `<div style="grid-column:1/-1;">${fieldE('Análise geracional', q._pathAnGer, q.analise_geracional, { tipo: 'textarea' })}</div>` : ''}
-            </div>
-          </div>`).join('') || '<div style="font-size:13px;color:var(--secondary);">QSA não disponível.</div>'}</div>`;
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
+          ${fieldE('Geração', q._pathGeracao, q.geracao)}
+          ${fieldE('Bens arrestáveis', q._pathBens, q.bens_arrestaveis, { tipo: 'number', format: formatCurrencyFull })}
+          ${fieldE('IRPF disponível', q._pathIRPF, q.irpf_disponivel, { format: v => v ? 'Sim' : 'Não' })}
+          ${(q.analise_geracional || currentOverrides[q._pathAnGer]) ? `<div style="grid-column:1/-1;">${fieldE('Análise geracional', q._pathAnGer, q.analise_geracional, { tipo: 'textarea' })}</div>` : ''}
+        </div>
+      </div>`).join('') || '<div style="font-size:13px;color:var(--secondary);">QSA não disponível.</div>'}
+      ${editMode ? `<button class="btn btn-secondary btn-sm" onclick="adicionarSocioManual(${qsaCards.length})">+ Adicionar Sócio</button>` : ''}
+    </div>`;
                     break;
                 }
 
-                case 'grupo':
+                case 'grupo': {
+                    const _grupoRaw = rd.grupo_economico || [];
+                    const grupoList = _grupoRaw.map((g, idx) => {
+                        const base = 'grupo_economico.' + idx;
+                        return Object.assign({}, g, {
+                            empresa: getField(base + '.empresa', g.empresa),
+                            cnpj: getField(base + '.cnpj', g.cnpj),
+                            situacao: getField(base + '.situacao', g.situacao),
+                            relacao: getField(base + '.relacao', g.relacao),
+                            restricoes: getField(base + '.restricoes', g.restricoes),
+                            _idx: idx,
+                            _pathEmpresa: base + '.empresa',
+                            _pathCnpj: base + '.cnpj',
+                            _pathSituacao: base + '.situacao',
+                            _pathRelacao: base + '.relacao',
+                            _pathRestricoes: base + '.restricoes',
+                        });
+                    });
+
                     html = `<div class="section-block"><h3>Grupo Econômico</h3>
-            <table class="data-table">
-              <thead><tr><th>Empresa</th><th>CNPJ</th><th>Situação</th><th>Relação</th><th>Restrições</th></tr></thead>
-              <tbody>${(rd.grupo_economico || []).map(g => `<tr>
-                <td>${g.empresa || '—'}</td><td>${g.cnpj || '—'}</td>
-                <td><span class="tag ${g.situacao?.toLowerCase().includes('ativa') ? 'green' : 'yellow'}">${g.situacao || '—'}</span></td>
-                <td>${g.relacao || '—'}</td>
-                <td>${g.restricoes || '—'}</td>
-              </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--secondary);">Nenhuma empresa do grupo encontrada</td></tr>'}</tbody>
-            </table>
-          </div>`;
+        <table class="data-table">
+          <thead><tr><th>Empresa</th><th>CNPJ</th><th>Situação</th><th>Relação</th><th>Restrições</th>${editMode ? '<th></th>' : ''}</tr></thead>
+          <tbody>${grupoList.map(g => `<tr>
+            <td>${renderField(g._pathEmpresa, g.empresa)}</td>
+            <td>${renderField(g._pathCnpj, g.cnpj)}</td>
+            <td><span class="tag ${(g.situacao || '').toLowerCase().includes('ativa') ? 'green' : 'yellow'}">${renderField(g._pathSituacao, g.situacao)}</span></td>
+            <td>${renderField(g._pathRelacao, g.relacao)}</td>
+            <td>${renderField(g._pathRestricoes, g.restricoes)}</td>
+            ${editMode ? `<td><button onclick="removerEmpresaGrupoManual(${g._idx})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:14px;" title="Remover">✕</button></td>` : ''}
+          </tr>`).join('') || `<tr><td colspan="${editMode ? 6 : 5}" style="text-align:center;color:var(--secondary);">Nenhuma empresa do grupo encontrada</td></tr>`}</tbody>
+        </table>
+        ${editMode ? `<button class="btn btn-secondary btn-sm" style="margin-top:12px;" onclick="adicionarEmpresaGrupoManual(${grupoList.length})">+ Adicionar Empresa</button>` : ''}
+      </div>`;
                     break;
+                }
 
                 case 'parecer-ia':
                     html = `
@@ -6159,6 +6280,13 @@ body.edit-mode #topbar {
         function fecharModalUsuario() {
             document.getElementById('modal-usuario').style.display = 'none';
         }
+
+              document.getElementById('modal-socio').addEventListener('click', function (e) {
+                  if (e.target === this) fecharModalSocio();
+              });
+              document.getElementById('modal-empresa-grupo').addEventListener('click', function (e) {
+                  if (e.target === this) fecharModalEmpresaGrupo();
+              });
 
         async function renderAdminDocs() {
             const el = document.getElementById('admin-docs-list');
@@ -7966,6 +8094,134 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
             ${t}
             <button onclick="removerCustomTag(${socioIdx},'${socioNome}',${ti})" style="background:none;border:none;color:#fff;cursor:pointer;font-size:12px;padding:0;line-height:1;">✕</button>
         </span>`).join('');
+              }
+
+              function adicionarSocioManual(novoIdx) {
+                  document.getElementById('socio-novo-idx').value = novoIdx;
+                  document.getElementById('socio-nome').value = '';
+                  document.getElementById('socio-cargo').value = '';
+                  document.getElementById('socio-participacao').value = '';
+                  document.getElementById('socio-geracao').value = '';
+                  document.getElementById('modal-socio').style.display = 'flex';
+              }
+
+              function fecharModalSocio() {
+                  document.getElementById('modal-socio').style.display = 'none';
+              }
+
+              async function confirmarAdicionarSocio() {
+                  const novoIdx = parseInt(document.getElementById('socio-novo-idx').value);
+                  const nome = document.getElementById('socio-nome').value.trim();
+                  const cargo = document.getElementById('socio-cargo').value.trim();
+                  const participacao = document.getElementById('socio-participacao').value;
+                  const geracao = document.getElementById('socio-geracao').value.trim();
+
+                  if (!nome) { showToast('Informe o nome do sócio.', 'error'); return; }
+
+                  const base = 'qsa.' + novoIdx;
+                  const changes = [
+                      { path: base + '.nome', valor: nome },
+                      { path: base + '.cargo', valor: cargo },
+                  ];
+                  if (participacao) changes.push({ path: base + '.participacao_pct', valor: parseFloat(participacao) });
+                  if (geracao) changes.push({ path: base + '.geracao', valor: geracao });
+
+                  await _aplicarOverridesEAtualizar(changes, 'qsa', novoIdx, {
+                      nome, cargo,
+                      participacao_pct: participacao ? parseFloat(participacao) : null,
+                      geracao, bens_arrestaveis: null, irpf_disponivel: false, analise_geracional: ''
+                  });
+                  fecharModalSocio();
+                  showToast('Sócio adicionado.', 'success');
+              }
+
+              async function removerSocioManual(idx) {
+                  if (!confirm('Remover este sócio da lista?')) return;
+                  const base = 'qsa.' + idx;
+                  const changes = [
+                      { path: base + '.nome', valor: '' },
+                      { path: base + '.cargo', valor: '' },
+                      { path: base + '.participacao_pct', valor: null },
+                  ];
+                  if (reportData?.qsa?.[idx]) reportData.qsa.splice(idx, 1);
+                  await _aplicarOverridesEAtualizar(changes, null, null, null);
+                  showToast('Sócio removido.', 'info');
+              }
+
+              function adicionarEmpresaGrupoManual(novoIdx) {
+                  document.getElementById('grupo-novo-idx').value = novoIdx;
+                  document.getElementById('grupo-empresa').value = '';
+                  document.getElementById('grupo-cnpj').value = '';
+                  document.getElementById('grupo-relacao').value = '';
+                  document.getElementById('grupo-situacao').value = 'ATIVA';
+                  document.getElementById('grupo-restricoes').value = '';
+                  document.getElementById('modal-empresa-grupo').style.display = 'flex';
+              }
+
+              function fecharModalEmpresaGrupo() {
+                  document.getElementById('modal-empresa-grupo').style.display = 'none';
+              }
+
+              async function confirmarAdicionarEmpresaGrupo() {
+                  const novoIdx = parseInt(document.getElementById('grupo-novo-idx').value);
+                  const empresa = document.getElementById('grupo-empresa').value.trim();
+                  const cnpj = document.getElementById('grupo-cnpj').value.trim();
+                  const relacao = document.getElementById('grupo-relacao').value.trim();
+                  const situacao = document.getElementById('grupo-situacao').value;
+                  const restricoes = document.getElementById('grupo-restricoes').value.trim();
+
+                  if (!empresa) { showToast('Informe o nome da empresa.', 'error'); return; }
+
+                  const base = 'grupo_economico.' + novoIdx;
+                  const changes = [
+                      { path: base + '.empresa', valor: empresa },
+                      { path: base + '.cnpj', valor: cnpj },
+                      { path: base + '.relacao', valor: relacao },
+                      { path: base + '.situacao', valor: situacao },
+                  ];
+                  if (restricoes) changes.push({ path: base + '.restricoes', valor: restricoes });
+
+                  await _aplicarOverridesEAtualizar(changes, 'grupo_economico', novoIdx, {
+                      empresa, cnpj, situacao, relacao, restricoes
+                  });
+                  fecharModalEmpresaGrupo();
+                  showToast('Empresa adicionada ao grupo.', 'success');
+              }
+
+              async function removerEmpresaGrupoManual(idx) {
+                  if (!confirm('Remover esta empresa do grupo?')) return;
+                  if (reportData?.grupo_economico?.[idx]) reportData.grupo_economico.splice(idx, 1);
+                  await _aplicarOverridesEAtualizar([], null, null, null);
+                  showToast('Empresa removida do grupo.', 'info');
+              }
+
+              async function _aplicarOverridesEAtualizar(changes, arrayKey, novoIdx, novoItem) {
+                  if (changes.length) {
+                      try {
+                          const r = await fetch(API + '/overrides/' + analysisId, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ por: currentUser?.email || '?', changes })
+                          });
+                          if (r.ok) {
+                              const data = await r.json();
+                              currentOverrides = data.overrides || {};
+                          }
+                      } catch (e) { }
+                  }
+                  if (arrayKey && novoItem) {
+                      if (!reportData[arrayKey]) reportData[arrayKey] = [];
+                      reportData[arrayKey][novoIdx] = novoItem;
+                  }
+                  // re-renderizar apenas a aba ativa atualmente (sem trocar de view)
+                  const abaAtivaEl = document.querySelector('.atab.active');
+                  const abaAtivaId = abaAtivaEl ? abaAtivaEl.id.replace('atab-', '') : null;
+                  if (abaAtivaId && reportData) {
+                      const pane = document.getElementById('apane-' + abaAtivaId);
+                      if (pane) pane.innerHTML = buildAbaContent(abaAtivaId, reportData);
+                  }
+                  // atualizar básico em background (sem trocar de view)
+                  if (reportData) populateBasico(reportData);
               }
 
         /* ===== ETAPA 2 FIM ===== */
