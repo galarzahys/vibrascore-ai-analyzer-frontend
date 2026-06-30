@@ -2743,9 +2743,8 @@ body.edit-mode #topbar {
 
             if (!analysisId) {
                 try {
-                    const form = new FormData();
-                    if (currentUser?.client_id) form.append('client_id', currentUser.client_id);
-                    const r = await fetch(API + '/documents/create-analysis', { method: 'POST', body: form });
+                    const clientIdParam = currentUser?.client_id ? '?client_id=' + encodeURIComponent(currentUser.client_id) : '';
+                    const r = await fetch(API + '/documents/create-analysis' + clientIdParam, { method: 'POST' });
                     if (!r.ok) throw new Error();
                     const d = await r.json();
                     analysisId = d.analysis_id;
