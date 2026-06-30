@@ -3232,7 +3232,7 @@ body.edit-mode #topbar {
           <td><span class="score-badge ${classe}">${classe} · ${(a.score || 0).toFixed(1)}</span></td>
           <td>${formatCurrency(a.limite)}</td>
           <td><span class="status-pill ${a.status}">${{ 'pending': 'Pendente', 'processing': 'Processando', 'done': 'Aguardando Parecer', 'error': 'Erro', 'aguardando_comite': 'Aguard. Comitê', 'em_deliberacao': 'Em Deliberação', 'aprovado': 'Aprovado', 'aprovado_com_ressalvas': 'Aprov. c/ Ressalvas', 'recusado': 'Recusado' }[a.status] || a.status}</span></td>
-          <td style="color:var(--secondary);">${a.data}</td>
+          <td style="color:var(--secondary);">${formatarDataHora(a.data)}</td>
           <td style="color:var(--secondary);">${a.analista}</td>
         `;
                 tbody.appendChild(tr);
@@ -3730,13 +3730,13 @@ body.edit-mode #topbar {
                 const etapas = [
                     {
                         label: 'Análise iniciada',
-                        data: ana.data || '—',
+                        data: formatarDataHora(ana.data) || '—',
                         status: 'done',
                         icon: '📋',
                     },
                     {
                         label: 'Análise IA concluída',
-                        data: ana.data || '—',
+                        data: formatarDataHora(ana.data) || '—',
                         status: ['pending', 'processing', 'error'].includes(rd.status) ? 'pending' : 'done',
                         icon: '🤖',
                     },
@@ -7572,6 +7572,15 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
                   el.value = numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
               }
 
+              function formatarDataHora(isoString) {
+                  if (!isoString) return '—';
+                  const d = new Date(isoString);
+                  return d.toLocaleString('pt-BR', {
+                      day: '2-digit', month: '2-digit', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                  });
+              }
+
         async function grupoCarregarConsolidado(grupoId) {
             const container = document.getElementById('gp-consolidado-container');
             if (!container) return;
@@ -8043,6 +8052,23 @@ ${d.required !== 'hard' ? `<button class="btn btn-danger btn-sm" onclick="deleta
             if (!btn) return;
             btn.style.display = (podeEditar() && analysisId) ? 'inline-flex' : 'none';
         }
+
+        /* ===== CNPJ MASK ===== */
+        function aplicarMascaraCnpj(inputEl) {
+            if (!inputEl) return;
+            inputEl.addEventListener('input', function (e) {
+                let v = e.target.value.replace(/\D/g, '').slice(0, 14);
+                if (v.length > 12) v = v.slice(0, 2) + '.' + v.slice(2, 5) + '.' + v.slice(5, 8) + '/' + v.slice(8, 12) + '-' + v.slice(12);
+                else if (v.length > 8) v = v.slice(0, 2) + '.' + v.slice(2, 5) + '.' + v.slice(5, 8) + '/' + v.slice(8);
+                else if (v.length > 5) v = v.slice(0, 2) + '.' + v.slice(2, 5) + '.' + v.slice(5);
+                else if (v.length > 2) v = v.slice(0, 2) + '.' + v.slice(2);
+                e.target.value = v;
+            });
+        }
+
+              aplicarMascaraCnpj(document.getElementById('empresa-cnpj'));
+              aplicarMascaraCnpj(document.getElementById('emp-cnpj'));
+              aplicarMascaraCnpj(document.getElementById('grupo-cnpj'));
 
 
         // ---------------- DOCUMENTOS
